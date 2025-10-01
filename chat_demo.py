@@ -1,6 +1,4 @@
 import argparse
-import outlines
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from pydantic import BaseModel
 from typing import List, Optional
 import sys, json
