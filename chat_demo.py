@@ -1,9 +1,7 @@
 import argparse
-from pydantic import BaseModel
-from typing import List, Optional
 import sys, json
 from assistant import LLMAssistant
-from simulator.scene import MPMBody
+from simulator.config import GenesisConfig
 
 def main():
     parser = argparse.ArgumentParser(
@@ -82,7 +80,7 @@ def main():
                 print("Generating response...")
                 structured_response = assistant.generate_json(
                     prompt, 
-                    MPMBody,
+                    GenesisConfig,
                     max_length=args.max_tokens
                 )
                 

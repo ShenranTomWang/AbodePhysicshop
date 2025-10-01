@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional, Union
+from typing import Literal, Union
 
 class ElasticMaterial(BaseModel):
     type: Literal["Elastic"] = "Elastic"
@@ -10,14 +10,14 @@ class ElasticMaterial(BaseModel):
 
 class SnowMaterial(BaseModel):
     type: Literal["Snow"] = "Snow"
-    rho: Optional[float] = None
+    rho: float = Field(..., description="Density")
 
 class SandMaterial(BaseModel):
     type: Literal["Sand"] = "Sand"
-    rho: Optional[float] = None
+    rho: float = Field(..., description="Density")
 
 class LiquidMaterial(BaseModel):
     type: Literal["Liquid"] = "Liquid"
-    rho: Optional[float] = None
+    rho: float = Field(..., description="Density")
 
 Material = Union[ElasticMaterial, SnowMaterial, SandMaterial, LiquidMaterial]

@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 from auxiliary import Vec3, Color3
 
