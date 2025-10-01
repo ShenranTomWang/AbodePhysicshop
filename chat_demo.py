@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import sys, json
 from assistant import LLMAssistant
+from physics_obj import MPMBody
 
 # Define your response schema using Pydantic
 class ChatResponse(BaseModel):
@@ -88,7 +89,7 @@ def main():
                 print("Generating response...")
                 structured_response = assistant.generate_json(
                     prompt, 
-                    ChatResponse,
+                    MPMBody,
                     max_length=args.max_tokens
                 )
                 
