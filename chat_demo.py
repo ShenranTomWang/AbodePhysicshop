@@ -3,14 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import sys, json
 from assistant import LLMAssistant
-from physics_obj import MPMBody
-
-# Define your response schema using Pydantic
-class ChatResponse(BaseModel):
-    response: str
-    confidence: Optional[float] = None
-    categories: List[str]
-    sentiment: Optional[str] = None
+from simulator.scene import MPMBody
 
 def main():
     parser = argparse.ArgumentParser(
