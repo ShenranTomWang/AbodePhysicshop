@@ -17,5 +17,5 @@ class LLMAssistant:
 
     def generate_json(self, prompt: str, formatter: BaseModel, max_length: int = 512) -> dict:
         response = self.model(prompt, formatter, max_length=max_length)
-        json_output = formatter.model_validate_json(response)
-        return json_output
+        # response = formatter.model_validate_json(response)
+        return response
