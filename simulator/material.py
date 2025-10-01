@@ -2,22 +2,22 @@ from pydantic import BaseModel, Field
 from typing import Literal, Union
 
 class ElasticMaterial(BaseModel):
-    type: Literal["Elastic"] = "Elastic"
-    E: float = Field(..., description="Young's modulus")
-    nu: float = Field(..., description="Poisson's ratio")
-    rho: float = Field(..., description="Density")
-    model: Literal["corotation", "neo_hookean", "stvk"] = "corotation"
+    type: Literal["Elastic"]
+    E: float 
+    nu: float
+    rho: float
+    model: Literal["corotation", "neo_hookean", "stvk"]
 
 class SnowMaterial(BaseModel):
-    type: Literal["Snow"] = "Snow"
-    rho: float = Field(..., description="Density")
+    type: Literal["Snow"]
+    rho: float
 
 class SandMaterial(BaseModel):
-    type: Literal["Sand"] = "Sand"
-    rho: float = Field(..., description="Density")
+    type: Literal["Sand"]
+    rho: float
 
 class LiquidMaterial(BaseModel):
-    type: Literal["Liquid"] = "Liquid"
-    rho: float = Field(..., description="Density")
+    type: Literal["Liquid"]
+    rho: float 
 
 Material = Union[ElasticMaterial, SnowMaterial, SandMaterial, LiquidMaterial]

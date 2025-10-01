@@ -4,17 +4,17 @@ from .options import SimOptions, MPMOptions, VisOptions, ViewerOptions, CaptureO
 from .scene import StaticObject, MPMBody
 
 class GenesisConfig(BaseModel):
-    show_viewer: bool = Field(True, description="Whether to show viewer; optional in some setups")
-    steps: int = 1000
-    max_bodies: int = 4
-    dump_particles: bool = True
+    show_viewer: bool
+    steps: int
+    max_bodies: int
+    dump_particles: bool
 
-    sim_options: SimOptions = SimOptions()
-    mpm_options: MPMOptions = MPMOptions()
-    vis_options: VisOptions = VisOptions()
-    viewer_options: ViewerOptions = ViewerOptions()
+    sim_options: SimOptions
+    mpm_options: MPMOptions
+    vis_options: VisOptions
+    viewer_options: ViewerOptions
 
-    static: List[StaticObject] = []
-    mpm_bodies: List[MPMBody] = []
+    static: List[StaticObject]
+    mpm_bodies: List[MPMBody]
 
-    capture: CaptureOptions = CaptureOptions()
+    capture: CaptureOptions

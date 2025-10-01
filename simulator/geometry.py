@@ -3,15 +3,15 @@ from typing import Literal, Union
 from .auxiliary import Vec3
 
 class PlaneMorph(BaseModel):
-    type: Literal["Plane"] = "Plane"
+    type: Literal["Plane"]
 
 class BoxMorph(BaseModel):
-    type: Literal["Box"] = "Box"
+    type: Literal["Box"]
     pos: Vec3
     size: Vec3
 
 class SphereMorph(BaseModel):
-    type: Literal["Sphere"] = "Sphere"
+    type: Literal["Sphere"]
     pos: Vec3
     radius: float
 
