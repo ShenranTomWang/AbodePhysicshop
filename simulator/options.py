@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from auxiliary import Vec3, Color3
+from .auxiliary import Vec3, Color3
 
 class SimOptions(BaseModel):
     dt: float = 1e-3

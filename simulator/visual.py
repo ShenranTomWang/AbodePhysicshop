@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Literal
-from auxiliary import Color3
+from .auxiliary import Color3
 
 class Surface(BaseModel):
     type: Literal["Default"] = "Default"

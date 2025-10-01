@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-from geometry import Morph
-from visual import Surface
-from material import Material
+from .geometry import Morph
+from .visual import Surface
+from .material import Material
 
 class StaticObject(BaseModel):
     name: str

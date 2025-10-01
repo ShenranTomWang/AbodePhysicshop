@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Literal, Union
-from auxiliary import Vec3
+from .auxiliary import Vec3
 
 class PlaneMorph(BaseModel):
     type: Literal["Plane"] = "Plane"

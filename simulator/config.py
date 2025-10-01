@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel, Field
-from simulator.options import SimOptions, MPMOptions, VisOptions, ViewerOptions, CaptureOptions
-from simulator.scene import StaticObject, MPMBody
+from .options import SimOptions, MPMOptions, VisOptions, ViewerOptions, CaptureOptions
+from .scene import StaticObject, MPMBody
 
 class GenesisConfig(BaseModel):
     show_viewer: bool = Field(True, description="Whether to show viewer; optional in some setups")
