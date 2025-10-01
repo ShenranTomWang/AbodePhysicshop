@@ -5,8 +5,10 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "accelerate>=1.10.1",
     "huggingface>=0.0.1",
     "outlines>=1.2.5",
     "pydantic>=2.11.9",
+    "torch>=2.8.0",
     "transformers>=4.56.2",
 ]
