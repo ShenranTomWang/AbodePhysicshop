@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from pydantic import BaseModel
 from typing import List, Optional
 import sys, json
-from assistant.llm_assistant import LLMAssistant
+from assistant import LLMAssistant
 
 # Define your response schema using Pydantic
 class ChatResponse(BaseModel):
