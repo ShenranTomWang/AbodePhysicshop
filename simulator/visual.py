@@ -5,4 +5,4 @@ from .auxiliary import Color3
 class Surface(BaseModel):
     type: Literal["Default"]
     color: Color3
-    vis_mode: Literal["particle", "recon"]
+    vis_mode: Literal["visual", "collision", "sdf"]
