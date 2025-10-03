@@ -1,6 +1,7 @@
 import outlines
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from pydantic import BaseModel
+from simulator.config import GenesisConfig
 
 outlines.models.from_transformers
 
@@ -17,5 +18,13 @@ class LLMAssistant:
 
     def generate_json(self, prompt: str, formatter: BaseModel, max_length: int = 512) -> dict:
         response = self.model(prompt, formatter, max_length=max_length)
-        # response = formatter.model_validate_json(response)
+        response = formatter.model_validate_json(response)
         return response
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class AssistantResponse(BaseModel):
+    config: GenesisConfig
+    response: Message

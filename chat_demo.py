@@ -1,6 +1,6 @@
 import argparse
 import sys, json
-from assistant import LLMAssistant
+from backend.assistant import AssistantResponse
 from simulator.config import GenesisConfig
 
 def main():
@@ -14,28 +14,24 @@ def main():
             python chat_script.py -m Qwen/Qwen2-7B-Instruct --max-tokens 256
         """
     )
-    
     parser.add_argument(
         '-m', '--model',
         type=str,
         required=True,
         help='Hugging Face model name (e.g., microsoft/Phi-3-mini-4k-instruct)'
     )
-    
     parser.add_argument(
         '-d', '--device',
         type=str,
         default='auto',
         help='Device to run the model on (auto, cpu, cuda, cuda:0, etc.)'
     )
-    
     parser.add_argument(
         '--max-tokens',
         type=int,
         default=51200,
         help='Maximum tokens to generate in the response'
     )
-    
     args = parser.parse_args()
     
     try:
@@ -80,7 +76,7 @@ def main():
                 print("Generating response...")
                 structured_response = assistant.generate_json(
                     prompt, 
-                    GenesisConfig,
+                    AssistantResponse,
                     max_length=args.max_tokens
                 )
                 
