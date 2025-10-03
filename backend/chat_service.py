@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Tuple
-from .assistant import LLMAssistant, AssistantResponse
+from .assistant import LLMAssistant, AssistantResponse, Message
 from simulator.config import GenesisConfig
 
 _ASSISTANT_CACHE: dict[Tuple[str, str], LLMAssistant] = {}
@@ -10,17 +10,17 @@ def get_or_create_assistant(model: str, device: str = "auto") -> LLMAssistant:
         _ASSISTANT_CACHE[key] = LLMAssistant(model, device)
     return _ASSISTANT_CACHE[key]
 
-def build_prompt(assistant: LLMAssistant, conversation_history: List[Dict[str, Any]]) -> str:
+def build_prompt(assistant: LLMAssistant, conversation_history: List[Message]) -> str:
     """
     conversation_history is a list of messages like:
       {"role": "system"|"user"|"assistant", "content": "text"}
     """
-    if not conversation_history or conversation_history[0].get("role") != "system":
+    if not conversation_history or conversation_history[0].role != "system":
         conversation_history = [
-            {
-                "role": "system",
-                "content": "You are a helpful AI assistant that provides structured responses in JSON format."
-            },
+            Message(
+                role="system",
+                content="You are a helpful AI assistant that provides structured responses in JSON format."
+            ),
             *conversation_history,
         ]
     return assistant.chat2prompt(conversation_history)
@@ -29,7 +29,7 @@ def generate_structured_response(
     model: str,
     device: str,
     max_tokens: int,
-    conversation_history: List[Dict[str, Any]],
+    conversation_history: List[Message],
 ) -> Any:
     """
     Core business logic:

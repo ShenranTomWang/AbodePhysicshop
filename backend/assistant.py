@@ -5,6 +5,12 @@ from simulator.config import GenesisConfig
 
 outlines.models.from_transformers
 
+class Message(BaseModel):
+    role: str
+    content: str
+
+class AssistantResponse(Message):
+    config: GenesisConfig
 class LLMAssistant:
     def __init__(self, model_name: str, device: str = "cpu"):
         self.model = outlines.from_transformers(
@@ -12,7 +18,8 @@ class LLMAssistant:
             AutoTokenizer.from_pretrained(model_name)
         )
         
-    def chat2prompt(self, messages: list[dict]) -> str:
+    def chat2prompt(self, messages: list[Message]) -> str:
+        messages = [m.dict() for m in messages]
         prompt = self.model.hf_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         return prompt
 
@@ -20,11 +27,3 @@ class LLMAssistant:
         response = self.model(prompt, formatter, max_length=max_length)
         response = formatter.model_validate_json(response)
         return response
-
-class Message(BaseModel):
-    role: str
-    content: str
-
-class AssistantResponse(BaseModel):
-    config: GenesisConfig
-    response: Message
