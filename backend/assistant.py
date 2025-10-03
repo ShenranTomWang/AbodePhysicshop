@@ -11,6 +11,7 @@ class Message(BaseModel):
 
 class AssistantResponse(Message):
     config: GenesisConfig
+
 class LLMAssistant:
     def __init__(self, model_name: str, device: str = "cpu"):
         self.model = outlines.from_transformers(

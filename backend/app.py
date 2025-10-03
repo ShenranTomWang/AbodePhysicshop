@@ -9,7 +9,7 @@ class GenerateRequest(BaseModel):
     device: str = Field("cpu", description="The device to run the model on, e.g., 'cpu' or 'cuda'.")
     conversation_history: list[Message] = Field(
         ..., 
-        description="A list of messages representing the conversation history. Each message is a dict with 'role' and 'content'."
+        description="A list of messages representing the conversation history."
     )
     max_tokens: int = Field(51200, description="The maximum number of tokens to generate in the response.")
 
