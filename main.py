@@ -1,7 +1,7 @@
 from subprocess import Popen
 
 def main():
-    process = Popen(["uvicorn", "backend.app:app", "--port", "8000", "--reload"])
+    process = Popen(["uvicorn", "backend.app:app", "--host", "localhost", "--port", "8000", "--reload"])
     process.wait()
     # TODO: start frontend here as well
 
