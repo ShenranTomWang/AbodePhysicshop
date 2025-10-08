@@ -7,6 +7,7 @@ requires-python = ">=3.9"
 dependencies = [
     "accelerate>=1.10.1",
     "fastapi>=0.118.0",
+    "genesis>=0.4.1",
     "huggingface>=0.0.1",
     "outlines>=1.2.5",
     "pydantic>=2.11.9",
