@@ -16,7 +16,7 @@ class GenerateRequest(BaseModel):
 @app.post("/generate")
 def generate(request: GenerateRequest):
     try:
-        history = [m.dict() for m in request.conversation_history]
+        history = [m.model_dump() for m in request.conversation_history]
         response = generate_structured_response(
             model=request.model,
             device=request.device,
