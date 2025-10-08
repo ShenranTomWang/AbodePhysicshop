@@ -1,15 +1,22 @@
 import outlines
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from pydantic import BaseModel
+from enum import Enum
 from simulator.config import GenesisConfig
 
 outlines.models.from_transformers
 
+class Role(str, Enum):
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+
 class Message(BaseModel):
-    role: str
+    role: Role
     content: str
 
 class AssistantResponse(Message):
+    chain_of_thought: str
     config: GenesisConfig
 
 class LLMAssistant:
@@ -20,11 +27,11 @@ class LLMAssistant:
         )
         
     def chat2prompt(self, messages: list[Message]) -> str:
-        messages = [m.dict() for m in messages]
+        messages = [m.model_dump_json() for m in messages]
         prompt = self.model.hf_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         return prompt
 
-    def generate_json(self, prompt: str, formatter: BaseModel, max_length: int = 512) -> dict:
-        response = self.model(prompt, formatter, max_length=max_length)
-        response = formatter.model_validate_json(response)
+    def generate_json(self, prompt: str, max_length: int = 512) -> AssistantResponse:
+        response = self.model(prompt, AssistantResponse, max_length=max_length)
+        response = AssistantResponse.model_validate_json(response)
         return response

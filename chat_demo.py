@@ -1,7 +1,7 @@
 import argparse
 import sys, json
-from backend.assistant import AssistantResponse
-from simulator.config import GenesisConfig
+from backend.assistant import AssistantResponse, LLMAssistant, Message, Role
+from backend.chat_service import build_prompt
 
 def main():
     parser = argparse.ArgumentParser(
@@ -43,9 +43,8 @@ def main():
         print("Chat with the AI (type 'quit' or 'exit' to end)")
         print("Responses will be structured as JSON")
         print("="*50)
-        
+
         conversation_history = []
-        
         while True:
             try:
                 user_input = input("\nYou: ").strip()
@@ -57,39 +56,28 @@ def main():
                 if not user_input:
                     continue
                 
-                # Build conversation messages
-                if not conversation_history:
-                    conversation_history.append({
-                        "role": "system",
-                        "content": "You are a helpful AI assistant that provides structured responses in JSON format."
-                    })
-                
-                conversation_history.append({
-                    "role": "user",
-                    "content": user_input
-                })
-                
-                # Convert conversation to prompt
-                prompt = assistant.chat2prompt(conversation_history)
+                conversation_history.append(Message(
+                    role=Role.USER,
+                    content=user_input
+                ))
+
+                prompt = build_prompt(assistant, conversation_history)
+                print(prompt)
                 
                 # Generate structured response
                 print("Generating response...")
                 structured_response = assistant.generate_json(
-                    prompt, 
-                    AssistantResponse,
+                    prompt,
                     max_length=args.max_tokens
                 )
                 
                 # Add assistant response to conversation history
-                conversation_history.append({
-                    "role": "assistant", 
-                    "content": json.dumps(structured_response)
-                })
+                conversation_history.append(structured_response)
                 
                 # Display the structured response
                 print("\n" + "-" * 30)
                 print("AI Response:")
-                print(f"💬 {json.dumps(structured_response)}")
+                print(f"💬 {structured_response.model_dump_json()}")
                 print("-" * 30)
                 
             except KeyboardInterrupt:

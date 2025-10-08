@@ -1,6 +1,5 @@
-from typing import List, Dict, Any, Tuple
-from .assistant import LLMAssistant, AssistantResponse, Message
-from simulator.config import GenesisConfig
+from typing import List, Any, Tuple
+from .assistant import LLMAssistant, Message, Role
 
 _ASSISTANT_CACHE: dict[Tuple[str, str], LLMAssistant] = {}
 
@@ -15,11 +14,15 @@ def build_prompt(assistant: LLMAssistant, conversation_history: List[Message]) -
     conversation_history is a list of messages like:
       {"role": "system"|"user"|"assistant", "content": "text"}
     """
-    if not conversation_history or conversation_history[0].role != "system":
+    if not conversation_history or conversation_history[0].role != Role.SYSTEM:
         conversation_history = [
             Message(
-                role="system",
-                content="You are a helpful AI assistant that provides structured responses in JSON format."
+                role=Role.SYSTEM,
+                content="""
+                    You are a helpful AI assistant that provides config for Genesis physics simulation structured in JSON format. \
+                    You will provide a textual response or anything you want to ask the user in the "content" field, and a detailed "chain_of_thought" field for your reasoning. \
+                    Finally, you will provide a "config" field containing the GenesisConfig JSON schema.
+                """# TODO: Add example response
             ),
             *conversation_history,
         ]
@@ -42,7 +45,6 @@ def generate_structured_response(
     prompt = build_prompt(assistant, conversation_history)
     structured_response = assistant.generate_json(
         prompt,
-        AssistantResponse,
         max_length=max_tokens,
     )
     return structured_response
