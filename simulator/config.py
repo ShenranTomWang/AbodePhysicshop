@@ -3,6 +3,9 @@ from pydantic import BaseModel, Field, model_validator, field_validator
 from .options import SimOptions, MPMOptions, VisOptions, ViewerOptions, CaptureOptions
 from .scene import StaticObject, MPMBody
 from .auxiliary import _clip
+from .geometry import PlaneMorph
+from .material import ElasticMaterial
+from .visual import Surface
 
 def _min3(a, b): return (min(a[0], b[0]), min(a[1], b[1]), min(a[2], b[2]))
 def _max3(a, b): return (max(a[0], b[0]), max(a[1], b[1]), max(a[2], b[2]))
@@ -27,9 +30,7 @@ class GenesisConfig(BaseModel):
 
     # Require at least one MPM body by default
     min_bodies: int = 1
-    mpm_bodies: List[MPMBody] = Field(default_factory=list)
-
-    capture: Optional[CaptureOptions] = None
+    mpm_bodies: List[MPMBody] = Field(default_factory=lambda: [MPMBody(name="default", material=ElasticMaterial(), morph=PlaneMorph(), surface=Surface())])
 
     # --- guardrail knobs ---
     auto_fit_bounds: bool = True

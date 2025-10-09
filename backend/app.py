@@ -1,22 +1,36 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from .chat_service import generate_structured_response
-from .assistant import AssistantResponse, Message
+from .assistant import AssistantResponse, Message, Role
 app = FastAPI()
 
 class GenerateRequest(BaseModel):
     model: str = Field(..., description="The name of the LLM model to use.")
     device: str = Field("cpu", description="The device to run the model on, e.g., 'cpu' or 'cuda'.")
-    conversation_history: list[Message] = Field(
+    conversation_history: list[dict] = Field(
         ..., 
         description="A list of messages representing the conversation history."
     )
     max_tokens: int = Field(51200, description="The maximum number of tokens to generate in the response.")
 
+def prepare_history(history: list[dict]) -> list[Message]:
+    messages = []
+    for entry in history:
+        try:
+            if entry["role"] in {Role.SYSTEM, Role.USER}:
+                messages.append(Message.model_validate_json(entry))
+            elif entry["role"] == Role.ASSISTANT:
+                messages.append(AssistantResponse.model_validate_json(entry))
+            else:
+                raise ValueError(f"Unknown role: {entry['role']}")
+        except Exception as e:
+            raise ValueError(f"Invalid message format: {entry}. Error: {e}")
+    return messages
+
 @app.post("/generate")
 def generate(request: GenerateRequest):
     try:
-        history = [m.model_dump() for m in request.conversation_history]
+        history = prepare_history(request.conversation_history)
         response = generate_structured_response(
             model=request.model,
             device=request.device,

@@ -83,9 +83,6 @@ def main():
             except KeyboardInterrupt:
                 print("\n\nChat session interrupted. Goodbye!")
                 break
-            except Exception as e:
-                print(f"Error generating response: {e}")
-                print("Please try again with a different message.")
                 
     except Exception as e:
         print(f"Failed to initialize the model: {e}")

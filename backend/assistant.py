@@ -1,4 +1,5 @@
 import outlines
+import logging
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from pydantic import BaseModel
 from enum import Enum
@@ -14,10 +15,15 @@ class Role(str, Enum):
 class Message(BaseModel):
     role: Role
     content: str
-
-class AssistantResponse(Message):
+    
+class GenesisConfigWithResponse(BaseModel):
+    response: str
     chain_of_thought: str
     config: GenesisConfig
+
+class AssistantResponse(BaseModel):
+    role: Role
+    content: GenesisConfigWithResponse
 
 class LLMAssistant:
     def __init__(self, model_name: str, device: str = "cpu"):
@@ -27,8 +33,9 @@ class LLMAssistant:
         )
         
     def chat2prompt(self, messages: list[Message]) -> str:
-        messages = [m.model_dump_json() for m in messages]
-        prompt = self.model.hf_tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        prompt = ""
+        for message in messages:
+            prompt += f"<|im_start|>{message.role}\n: {message.content}<|im_end|>\n"
         return prompt
 
     def generate_json(self, prompt: str, max_length: int = 512) -> AssistantResponse:

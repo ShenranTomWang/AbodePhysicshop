@@ -17,3 +17,6 @@ class Surface(BaseModel):
             return None
         vv = v.lower()
         return vv if vv in _ALLOWED else None
+    
+    def to_genesis(self):
+        return gs.surfaces.Default(color=self.color, vis_mode=self.vis_mode)

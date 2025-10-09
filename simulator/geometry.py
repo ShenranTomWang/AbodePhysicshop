@@ -7,8 +7,12 @@ def _v3(x: Vec3) -> Tuple[float, float, float]:
 
 class PlaneMorph(BaseModel):
     type: Literal["Plane"] = "Plane"
+    
     def aabb(self):
         return None
+    
+    def to_genesis(self):
+        return gs.morphs.Plane()
 
 class BoxMorph(BaseModel):
     type: Literal["Box"] = "Box"
@@ -23,6 +27,9 @@ class BoxMorph(BaseModel):
         lb = (px - hx, py - hy, pz - hz)
         ub = (px + hx, py + hy, pz + hz)
         return lb, ub
+    
+    def to_genesis(self):
+        return gs.morphs.Box(pos=self.pos, size=self.size)
 
 class SphereMorph(BaseModel):
     type: Literal["Sphere"] = "Sphere"
@@ -35,5 +42,8 @@ class SphereMorph(BaseModel):
         lb = (px - r, py - r, pz - r)
         ub = (px + r, py + r, pz + r)
         return lb, ub
+
+    def to_genesis(self):
+        return gs.morphs.Sphere(pos=self.pos, radius=self.radius)
 
 Morph = Union[PlaneMorph, BoxMorph, SphereMorph]

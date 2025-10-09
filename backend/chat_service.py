@@ -21,7 +21,8 @@ def build_prompt(assistant: LLMAssistant, conversation_history: List[Message]) -
                 content="""
                     You are a helpful AI assistant that provides config for Genesis physics simulation structured in JSON format. \
                     You will provide a textual response or anything you want to ask the user in the "content" field, and a detailed "chain_of_thought" field for your reasoning. \
-                    Finally, you will provide a "config" field containing the GenesisConfig JSON schema.
+                    Finally, you will provide a "config" field containing the GenesisConfig JSON schema. \
+                    Make assumptions about what the user wants, what objects should be static or dynamic, etc.
                 """# TODO: Add example response
             ),
             *conversation_history,
