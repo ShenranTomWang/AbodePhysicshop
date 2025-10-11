@@ -1,5 +1,5 @@
 from typing import List, Any, Tuple
-from .assistant import LLMAssistant, Message, Role
+from .assistant import LLMAssistant, Message, Role, AssistantResponse
 
 _ASSISTANT_CACHE: dict[Tuple[str, str], LLMAssistant] = {}
 
@@ -30,7 +30,7 @@ def generate_structured_response(
     device: str,
     max_tokens: int,
     conversation_history: List[Message],
-) -> Any:
+) -> AssistantResponse:
     """
     Core business logic:
     - Load/cached model

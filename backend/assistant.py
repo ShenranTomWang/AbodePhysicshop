@@ -4,6 +4,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from pydantic import BaseModel
 from enum import Enum
 from simulator.config import GenesisConfig
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 outlines.models.from_transformers
 
@@ -12,17 +15,16 @@ class Role(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
 
-class Message(BaseModel):
-    role: Role
-    content: str
-    
 class GenesisConfigWithResponse(BaseModel):
     response: str
     chain_of_thought: str
     config: GenesisConfig
 
-class AssistantResponse(BaseModel):
+class Message(BaseModel):
     role: Role
+    content: str | GenesisConfigWithResponse
+
+class AssistantResponse(Message):
     content: GenesisConfigWithResponse
 
 class LLMAssistant:

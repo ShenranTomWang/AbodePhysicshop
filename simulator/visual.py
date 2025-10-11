@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import Literal, Optional
 from .auxiliary import Color3
+import genesis as gs
 
 _ALLOWED = {"visual", "collision", "particle", "sdf", "recon"}
 

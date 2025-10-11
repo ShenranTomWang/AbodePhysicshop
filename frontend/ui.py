@@ -1,9 +1,11 @@
-import argparse, os, sys, json, threading, requests
-from backend.assistant import Message, AssistantResponse, Role
-from typing import List
-import genesis as gs
+import threading
+from backend.assistant import AssistantResponse, Role, Message
+from simulator.config import GenesisConfig
 from PySide6 import QtCore, QtGui, QtWidgets
 from .controllers import GenesisRunner, LLMClient
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class ChatList(QtWidgets.QListWidget):
     def __init__(self, bubble_hpad: int = 8, bubble_vpad: int = 8, *args, **kwargs):
@@ -15,25 +17,28 @@ class ChatList(QtWidgets.QListWidget):
         self._bubble_vpad = bubble_vpad
 
     def _compute_bubble_height(self, edit: QtWidgets.QTextEdit, max_width: int) -> int:
-        # account for padding in stylesheet
         text_width = max(20, max_width - 2 * self._bubble_hpad)
         doc: QtGui.QTextDocument = edit.document()
         doc.setTextWidth(text_width)
         h = int(doc.size().height()) + 2 * self._bubble_vpad
         return max(h, 40)
     
-    def add_bubble(self, text: str, me: bool):
+    def add_bubble(self, resp: Message):
         item = QtWidgets.QListWidgetItem()
         bubble = QtWidgets.QTextEdit()
         bubble.setReadOnly(True)
-        bubble.setText(text)
         bubble.setMinimumHeight(40)
         bubble.setFrameShape(QtWidgets.QFrame.NoFrame)
         bubble.setWordWrapMode(QtGui.QTextOption.WrapAtWordBoundaryOrAnywhere)
-        if me:
+        if resp.role == Role.USER:
+            bubble.setText(resp.content)
             bubble.setStyleSheet("QTextEdit { background: #e8f5e9; border-radius: 10px; padding: 8px; }")
-        else:
+        elif resp.role == Role.ASSISTANT:
+            bubble.setText(resp.content.response)
             bubble.setStyleSheet("QTextEdit { background: #e3f2fd; border-radius: 10px; padding: 8px; }")
+        else:
+            bubble.setText(resp.content)
+            bubble.setStyleSheet("QTextEdit { background: #f5f5f5; border-radius: 10px; padding: 8px; }")
         maxw = int(self.viewport().width() * 0.66)
         bubble.setMaximumWidth(maxw)
         bubble.setMinimumWidth(min(180, maxw))
@@ -44,7 +49,7 @@ class ChatList(QtWidgets.QListWidget):
         lay.setContentsMargins(6, 2, 6, 2)
         lay.setSpacing(6)
         
-        if me:
+        if resp.role == Role.USER:
             lay.addStretch(1)
             lay.addWidget(bubble, 0, QtCore.Qt.AlignRight)
         else:
@@ -58,9 +63,10 @@ class ChatList(QtWidgets.QListWidget):
         self.scrollToBottom()
 
 class MainWindow(QtWidgets.QMainWindow):
-    addBubble = QtCore.Signal(str, bool)
+    addBubble = QtCore.Signal(Message)
     showError = QtCore.Signal(str)
-    updateConfig = QtCore.Signal(AssistantResponse)
+    updateConfig = QtCore.Signal(GenesisConfig)
+    statusMessage = QtCore.Signal(str, int)
     
     def __init__(self, args):
         super().__init__()
@@ -97,7 +103,7 @@ class MainWindow(QtWidgets.QMainWindow):
         status_row.addStretch(1)
         status_row.addWidget(self.lbl_status)
         status_row.addStretch(1)
-        left_layout.addLayout(status_row)   # add first so it's on top
+        left_layout.addLayout(status_row)
         sim_controls = QtWidgets.QHBoxLayout()
         self.btn_start = QtWidgets.QPushButton("Start Sim")
         self.btn_end = QtWidgets.QPushButton("End Sim")
@@ -153,57 +159,76 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_send.clicked.connect(self._on_send)
         self.ed_input.returnPressed.connect(self._on_send)
         self.addBubble.connect(self.chat_list.add_bubble)
-        self.showError.connect(lambda msg: self._set_status(f"Error: {msg}"))
+        self.showError.connect(lambda msg: self.flash_status(f"Error: {msg}", 4000))
         self.updateConfig.connect(self._on_update)
-        self.runner.started.connect(lambda: self._set_status("Running"))
-        self.runner.stopped.connect(lambda rc: self._set_status(f"Stopped (rc={rc})"))
-        self.runner.errored.connect(lambda msg: self._set_status(f"Error: {msg}"))
+        self.runner.started.connect(lambda: self.flash_status("Running", 2000))
+        self.runner.stopped.connect(lambda rc: self.flash_status(f"Stopped (rc={rc})", 2000))
+        self.runner.errored.connect(lambda msg: self.flash_status(f"Error: {msg}", 4000))
 
-        self.chat_list.add_bubble("Connected UI ready. Start the sim and chat with the model on the right.", me=False)
+        self._status_timer = QtCore.QTimer(self)
+        self._status_timer.setSingleShot(True)
+        self._status_timer.timeout.connect(lambda: self._set_status("Idle"))
 
-    def _set_status(self, s: str):
+    def flash_status(self, text: str, ttl_ms: int = 3000):
+        self.statusMessage.emit(text, ttl_ms)
+    
+    @QtCore.Slot(str, int)
+    def _ui_status(self, text: str, ttl_ms: int):
+        self._set_status(text, ttl_ms if ttl_ms > 0 else None)
+
+    def _set_status(self, s: str, ttl_ms: int = None):
         self.lbl_status.setText(s)
         self.btn_start.setEnabled(not self.runner.is_running())
         self.btn_stop.setEnabled(self.runner.is_running())
+        self._status_timer.stop()
+        if ttl_ms is not None:
+            self._status_timer.start(ttl_ms)
 
     def _on_start(self):
-        # Warn if capture dir not referenced in config
-        # We don't parse the config here; we rely on user's config to have capture.dir set to args.capture.
         self.runner.start()
-        self._set_status("Starting…")
+        self.flash_status("Started", 2000)
         
     def _on_end(self):
         self.runner.end()
-        self._set_status("Ending…")
+        self.flash_status("Ended", 2000)
 
     def _on_stop(self):
         self.runner.stop()
-        self._set_status("Stopping…")
+        self.flash_status("Stopped", 2000)
 
     def _on_apply(self):
-        self.llm.set_params(
-            model=self.ed_model.text().strip() or "Qwen/Qwen2.5-1.5B-Instruct",
-            device=self.ed_device.text().strip() or "auto",
-            max_tokens=int(self.spn_tokens.value()),
-        )
-    
-    def _on_update(self, resp: AssistantResponse):
+        self.flash_status("Applying parameters…", 2000)
         try:
-            self.runner.update_config(resp.config.model_dump())
+            self.llm.set_params(
+                model=self.ed_model.text().strip() or "Qwen/Qwen2.5-1.5B-Instruct",
+                device=self.ed_device.text().strip() or "auto",
+                max_tokens=int(self.spn_tokens.value()),
+            )
+            self.flash_status("Parameters applied.", 2000)
+        except Exception as e:
+            self.showError.emit(f"Failed to apply parameters: {e}")
+    
+    def _on_update(self, cfg: GenesisConfig):
+        self.flash_status("Updating config…", 2000)
+        try:
+            self.runner.update_config(cfg)
+            self.flash_status("Config updated.", 2000)
         except Exception as e:
             self.showError.emit(f"Failed to update config: {e}")
 
     def _on_send(self):
+        self.flash_status("Sending message…", 2000)
         text = self.ed_input.text().strip()
         if not text:
             return
-        self.chat_list.add_bubble(text, me=True)
+        self.chat_list.add_bubble(Message(role=Role.USER, content=text))
         self.ed_input.clear()
         
-        def success_update(resp: AssistantResponse, me: bool):
-            self.addBubble.emit(f"{resp.content}", me=False)
-            cfg = resp.config
+        def success_update(resp: AssistantResponse):
+            self.addBubble.emit(resp)
+            cfg = resp.content.config
             self.updateConfig.emit(cfg)
+            self.flash_status("Message processed.", 2000)
 
         def worker():
             try:

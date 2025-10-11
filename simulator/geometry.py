@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Literal, Union, Tuple
 from .auxiliary import Vec3
+import genesis as gs
 
 def _v3(x: Vec3) -> Tuple[float, float, float]:
     return (float(x[0]), float(x[1]), float(x[2]))

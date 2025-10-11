@@ -1,6 +1,7 @@
-import sys, argparse, os
+import sys, argparse
 from PySide6 import QtWidgets
 from .ui import MainWindow
+import requests
 
 def parse_args():
     ap = argparse.ArgumentParser(description="Genesis + LLM Chat GUI")
@@ -21,6 +22,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     win = MainWindow(args)
     win.show()
+    win._on_apply()
     sys.exit(app.exec())
 
 

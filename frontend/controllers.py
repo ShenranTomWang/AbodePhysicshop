@@ -3,6 +3,7 @@ import threading, requests
 import genesis as gs
 from typing import List
 from backend.assistant import Message, AssistantResponse, Role
+from simulator.config import GenesisConfig
 
 class GenesisRunner(QtCore.QObject):
     """Run Genesis.
@@ -33,24 +34,24 @@ class GenesisRunner(QtCore.QObject):
         self._step_thread = threading.Thread(target=self.step, daemon=True)
         self._running = False
 
-    def update_config(self, cfg: dict):
+    def update_config(self, cfg: GenesisConfig):
         try:
             self._scene = gs.Scene(
-                sim_options=gs.options.SimOptions(**cfg["sim_options"]),
-                mpm_options=gs.options.MPMOptions(**cfg["mpm_options"]),
-                vis_options=gs.options.VisOptions(**cfg["vis_options"]),
-                viewer_options=gs.options.ViewerOptions(**cfg["viewer_options"]),
-                show_viewer=cfg["show_viewer"]
+                sim_options=gs.options.SimOptions(**cfg.sim_options),
+                mpm_options=gs.options.MPMOptions(**cfg.mpm_options),
+                vis_options=gs.options.VisOptions(**cfg.vis_options),
+                viewer_options=gs.options.ViewerOptions(**cfg.viewer_options),
+                show_viewer=cfg.show_viewer
             )
             self._bodies = []
-            for body in cfg["mpm_bodies"]:
+            for body in cfg.mpm_bodies:
                 _body = self._scene.add_entity(
                     material=body.material.to_genesis(),
                     morph=body.morph.to_genesis(),
                     surface=body.surface.to_genesis()
                 )
                 self._bodies.append(_body)
-            for body in cfg["static_bodies"]:
+            for body in cfg.static_bodies:
                 _static = self._scene.add_entity(
                     material=body.material.to_genesis(),
                     morph=body.morph.to_genesis(),
@@ -111,6 +112,15 @@ class LLMClient:
         self.model = model
         self.device = device
         self.max_tokens = max_tokens
+        payload = {
+            "model": self.model,
+            "device": self.device
+        }
+        resp = requests.put(self.backend_url + "/set_model", json=payload, timeout=10)
+        resp.raise_for_status()
+        resp = resp.json()
+        if resp["status_code"] != 200:
+            raise ValueError(f"Failed to set model parameters: {resp['text']}")
 
     def send(self, user_text: str) -> AssistantResponse:
         self.history.append(Message(role=Role.USER, content=user_text))
@@ -122,11 +132,6 @@ class LLMClient:
         }
         r = requests.post(self.backend_url + "/generate", json=payload, timeout=120)
         r.raise_for_status()
-        data = r.json()
-        if isinstance(data, dict) and "response" in data:
-            resp = data["response"]
-            ar = AssistantResponse.model_validate_json(resp)
-            self.history.append(ar)
-        else:
-            raise ValueError(f"Invalid response from backend: {data}")
+        ar = AssistantResponse.model_validate_json(data)
+        self.history.append(ar)
         return ar
