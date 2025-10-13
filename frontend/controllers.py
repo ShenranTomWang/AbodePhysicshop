@@ -130,8 +130,9 @@ class LLMClient:
             "max_tokens": self.max_tokens,
             "conversation_history": [m.__dict__ for m in self.history],
         }
-        r = requests.post(self.backend_url + "/generate", json=payload, timeout=120)
-        r.raise_for_status()
-        ar = AssistantResponse.model_validate_json(r)
+        resp = requests.post(self.backend_url + "/generate", json=payload, timeout=300)
+        resp.raise_for_status()
+        resp = resp.json()
+        ar = AssistantResponse.model_validate_json(resp)
         self.history.append(ar)
         return ar

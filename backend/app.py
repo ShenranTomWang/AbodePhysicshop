@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from .chat_service import generate_structured_response, get_or_create_assistant
 from .assistant import AssistantResponse, Message, Role
 from logging import getLogger, basicConfig, DEBUG
+import json
 basicConfig(level=DEBUG)
 logger = getLogger(__name__)
 app = FastAPI()
@@ -44,11 +45,14 @@ def generate(request: GenerateRequest):
             model=request.model,
             device=request.device,
             max_tokens=request.max_tokens,
-            conversation_history=history
+            conversation_history=history,
+            return_raw=True
         )
-        response.role = Role.ASSISTANT
+        response = json.loads(response)
+        response["role"] = Role.ASSISTANT
+        response = json.dumps(response)
         logger.debug(f"Generated response successfully. Response: {response}")
-        return response.model_dump()
+        return response
     except Exception as e:
         logger.error(f"Error generating response: {e}")
         raise HTTPException(status_code=500, detail=str(e))

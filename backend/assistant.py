@@ -40,7 +40,9 @@ class LLMAssistant:
             prompt += f"<|im_start|>{message.role}\n: {message.content}<|im_end|>\n"
         return prompt
 
-    def generate_json(self, prompt: str, max_length: int = 512) -> AssistantResponse:
+    def generate_json(self, prompt: str, max_length: int = 512, return_raw: bool = False) -> AssistantResponse:
         response = self.model(prompt, AssistantResponse, max_length=max_length)
+        if return_raw:
+            return response
         response = AssistantResponse.model_validate_json(response)
         return response

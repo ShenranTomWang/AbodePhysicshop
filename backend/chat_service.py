@@ -30,18 +30,24 @@ def generate_structured_response(
     device: str,
     max_tokens: int,
     conversation_history: List[Message],
+    return_raw: bool = False,
 ) -> AssistantResponse:
     """
-    Core business logic:
-    - Load/cached model
-    - Turn chat history into prompt
-    - Generate structured JSON via your GenesisConfig schema
-    - Return the structured_response (a Python object)
+    Generate a structured response from the LLM based on the conversation history.
+    args:
+        model: The name of the LLM model to use.
+        device: The device to run the model on, e.g., 'cpu' or 'cuda'.
+        max_tokens: The maximum number of tokens to generate in the response.
+        conversation_history: A list of Message objects representing the conversation history.
+        return_raw: If True, return the raw response from the model without validation.
+    returns:
+        An AssistantResponse object containing the model's response.
     """
     assistant = get_or_create_assistant(model, device)
     prompt = build_prompt(assistant, conversation_history)
     structured_response = assistant.generate_json(
         prompt,
         max_length=max_tokens,
+        return_raw=return_raw
     )
     return structured_response
