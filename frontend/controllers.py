@@ -132,6 +132,6 @@ class LLMClient:
         }
         r = requests.post(self.backend_url + "/generate", json=payload, timeout=120)
         r.raise_for_status()
-        ar = AssistantResponse.model_validate_json(data)
+        ar = AssistantResponse.model_validate_json(r)
         self.history.append(ar)
         return ar
