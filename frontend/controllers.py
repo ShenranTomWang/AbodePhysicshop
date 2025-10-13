@@ -26,16 +26,28 @@ class GenesisRunner(QtCore.QObject):
     ended = QtCore.Signal(int)
     errored = QtCore.Signal(str)
 
-    def __init__(self):
+    def __init__(self, device: str = "auto"):
         super().__init__()
+        self.device = device
+        gs.init(device=self.device)
         self._scene = None
+        self.cfg = None
         self._bodies = []
         self._statics = []
         self._step_thread = threading.Thread(target=self.step, daemon=True)
         self._running = False
+    
+    def to(self, device: str):
+        if device == self.device:
+            return
+        self.device = device
+        gs.init(device=self.device)
+        if self._scene:
+            self.update_config(self.cfg)
 
     def update_config(self, cfg: GenesisConfig):
         try:
+            self.cfg = cfg
             self._scene = gs.Scene(
                 sim_options=gs.options.SimOptions(**cfg.sim_options),
                 mpm_options=gs.options.MPMOptions(**cfg.mpm_options),

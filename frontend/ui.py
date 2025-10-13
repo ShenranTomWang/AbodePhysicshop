@@ -73,7 +73,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("Genesis + LLM GUI")
         self.resize(1200, 720)
 
-        self.runner = GenesisRunner()
+        self.runner = GenesisRunner(device=args.genesis_device)
 
         self.llm = LLMClient(
             backend_url=args.backend,
