@@ -26,10 +26,10 @@ class GenesisRunner(QtCore.QObject):
     ended = QtCore.Signal(int)
     errored = QtCore.Signal(str)
 
-    def __init__(self, device: str = "auto"):
+    def __init__(self, device: str = "cpu"):
         super().__init__()
-        self.device = device
-        gs.init(device=self.device)
+        self.device = getattr(gs, device)
+        gs.init(backend=self.device)
         self._scene = None
         self.cfg = None
         self._bodies = []
@@ -49,10 +49,10 @@ class GenesisRunner(QtCore.QObject):
         try:
             self.cfg = cfg
             self._scene = gs.Scene(
-                sim_options=gs.options.SimOptions(**cfg.sim_options),
-                mpm_options=gs.options.MPMOptions(**cfg.mpm_options),
-                vis_options=gs.options.VisOptions(**cfg.vis_options),
-                viewer_options=gs.options.ViewerOptions(**cfg.viewer_options),
+                sim_options=cfg.sim_options.to_genesis(),
+                mpm_options=cfg.mpm_options.to_genesis(),
+                vis_options=cfg.vis_options.to_genesis(),
+                viewer_options=cfg.viewer_options.to_genesis(),
                 show_viewer=cfg.show_viewer
             )
             self._bodies = []
@@ -61,7 +61,7 @@ class GenesisRunner(QtCore.QObject):
                     material=body.material.to_genesis(),
                     morph=body.morph.to_genesis(),
                     surface=body.surface.to_genesis()
-                )
+                )       # TODO: all to_genesis works ok, but add_entity produces genesis.GenesisException: Something went wrong
                 self._bodies.append(_body)
             for body in cfg.static_bodies:
                 _static = self._scene.add_entity(

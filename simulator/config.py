@@ -1,8 +1,7 @@
 from typing import List, Optional, Tuple
 from pydantic import BaseModel, Field, model_validator, field_validator
-from .options import SimOptions, MPMOptions, VisOptions, ViewerOptions, CaptureOptions
+from .options import SimOptions, MPMOptions, VisOptions, ViewerOptions
 from .scene import StaticObject, MPMBody
-from .auxiliary import _clip
 from .geometry import PlaneMorph
 from .material import ElasticMaterial
 from .visual import Surface

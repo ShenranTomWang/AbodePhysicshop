@@ -45,11 +45,10 @@ def generate(request: GenerateRequest):
             model=request.model,
             device=request.device,
             max_tokens=request.max_tokens,
-            conversation_history=history,
-            return_raw=True
+            conversation_history=history
         )
-        response = json.loads(response)
-        response["role"] = Role.ASSISTANT
+        response.role = Role.ASSISTANT
+        response = response.model_dump(mode="json")
         response = json.dumps(response)
         logger.debug(f"Generated response successfully. Response: {response}")
         return response

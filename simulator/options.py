@@ -1,6 +1,8 @@
 from pydantic import BaseModel, field_validator, model_validator
 from .auxiliary import Vec3, Color3, _clip
 import math
+import genesis as gs
+
 class SimOptions(BaseModel):
     dt: float = 1e-3
     substeps: int = 10
@@ -33,6 +35,13 @@ class SimOptions(BaseModel):
             raise ValueError("substeps must be >= 1 (and reasonably bounded).")
         return v
 
+    def to_genesis(self) -> gs.options.SimOptions:
+        return gs.options.SimOptions(
+            dt=self.dt,
+            substeps=self.substeps,
+            gravity=self.gravity
+        )
+
 class MPMOptions(BaseModel):
     lower_bound: Vec3 = (-1.0, -1.0, 0.0)
     upper_bound: Vec3 = (1.0, 1.0, 1.5)
@@ -56,15 +65,31 @@ class MPMOptions(BaseModel):
             raise ValueError("grid_density too small (<8).")
         return v
 
+    def to_genesis(self) -> gs.options.MPMOptions:
+        return gs.options.MPMOptions(
+            lower_bound=self.lower_bound,
+            upper_bound=self.upper_bound,
+            grid_density=self.grid_density
+        )
+
 class VisOptions(BaseModel):
     background_color: Color3 = (1.0, 1.0, 1.0)
     visualize_mpm_boundary: bool = True
+
+    def to_genesis(self) -> gs.options.VisOptions:
+        return gs.options.VisOptions(
+            background_color=self.background_color,
+            visualize_mpm_boundary=self.visualize_mpm_boundary
+        )
 
 class ViewerOptions(BaseModel):
     camera_fov: float = 35.0
     camera_pos: Vec3 = (2.0, -2.0, 1.5)
     camera_lookat: Vec3 = (0.0, 0.0, 0.5)
-
-class CaptureOptions(BaseModel):
-    dir: str = "frames"
-    every: int = 20
+    
+    def to_genesis(self) -> gs.options.ViewerOptions:
+        return gs.options.ViewerOptions(
+            camera_fov=self.camera_fov,
+            camera_pos=self.camera_pos,
+            camera_lookat=self.camera_lookat
+        )

@@ -29,8 +29,7 @@ def generate_structured_response(
     model: str,
     device: str,
     max_tokens: int,
-    conversation_history: List[Message],
-    return_raw: bool = False,
+    conversation_history: List[Message]
 ) -> AssistantResponse:
     """
     Generate a structured response from the LLM based on the conversation history.
@@ -39,7 +38,6 @@ def generate_structured_response(
         device: The device to run the model on, e.g., 'cpu' or 'cuda'.
         max_tokens: The maximum number of tokens to generate in the response.
         conversation_history: A list of Message objects representing the conversation history.
-        return_raw: If True, return the raw response from the model without validation.
     returns:
         An AssistantResponse object containing the model's response.
     """
@@ -47,7 +45,6 @@ def generate_structured_response(
     prompt = build_prompt(assistant, conversation_history)
     structured_response = assistant.generate_json(
         prompt,
-        max_length=max_tokens,
-        return_raw=return_raw
+        max_length=max_tokens
     )
     return structured_response

@@ -185,6 +185,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._status_timer.start(ttl_ms)
 
     def _on_start(self):
+        breakpoint()
         self.runner.start()
         self.flash_status("Started", 2000)
         
