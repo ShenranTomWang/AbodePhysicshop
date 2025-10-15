@@ -17,8 +17,8 @@ class PlaneMorph(BaseModel):
 
 class BoxMorph(BaseModel):
     type: Literal["Box"] = "Box"
-    pos: Vec3
-    size: Vec3
+    pos: Vec3 = [1, 1, 1]
+    size: Vec3 = [1, 1, 1]
 
     def aabb(self):
         px, py, pz = _v3(self.pos)

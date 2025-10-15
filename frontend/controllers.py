@@ -4,6 +4,7 @@ import genesis as gs
 from typing import List
 from backend.assistant import Message, AssistantResponse, Role
 from simulator.config import GenesisConfig
+import traceback
 
 class GenesisRunner(QtCore.QObject):
     """Run Genesis.
@@ -61,9 +62,9 @@ class GenesisRunner(QtCore.QObject):
                     material=body.material.to_genesis(),
                     morph=body.morph.to_genesis(),
                     surface=body.surface.to_genesis()
-                )       # TODO: all to_genesis works ok, but add_entity produces genesis.GenesisException: Something went wrong
+                )
                 self._bodies.append(_body)
-            for body in cfg.static_bodies:
+            for body in cfg.static:
                 _static = self._scene.add_entity(
                     material=body.material.to_genesis(),
                     morph=body.morph.to_genesis(),
@@ -72,6 +73,7 @@ class GenesisRunner(QtCore.QObject):
                 self._statics.append(_static)
             self._scene.build()
         except Exception as e:
+            traceback.print_exc()
             self.errored.emit(f"Failed to update config: {e}")
     
     def is_running(self) -> bool:
@@ -92,6 +94,7 @@ class GenesisRunner(QtCore.QObject):
         self._running = False
         if self._step_thread.is_alive():
             self._step_thread.join(timeout=5)
+        self._scene.reset() if self._scene else None
         self.stopped.emit(0)
 
     def end(self):

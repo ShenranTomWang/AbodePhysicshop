@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 from pydantic import BaseModel, Field, model_validator, field_validator
 from .options import SimOptions, MPMOptions, VisOptions, ViewerOptions
 from .scene import StaticObject, MPMBody
-from .geometry import PlaneMorph
+from .geometry import BoxMorph
 from .material import ElasticMaterial
 from .visual import Surface
 
@@ -29,7 +29,16 @@ class GenesisConfig(BaseModel):
 
     # Require at least one MPM body by default
     min_bodies: int = 1
-    mpm_bodies: List[MPMBody] = Field(default_factory=lambda: [MPMBody(name="default", material=ElasticMaterial(), morph=PlaneMorph(), surface=Surface())])
+    mpm_bodies: List[MPMBody] = Field(
+        default_factory=lambda: [
+            MPMBody(
+                name="default",
+                material=ElasticMaterial(),
+                morph=BoxMorph(),
+                surface=Surface()
+            )
+        ]
+    )
 
     # --- guardrail knobs ---
     auto_fit_bounds: bool = True

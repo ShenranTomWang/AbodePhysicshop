@@ -3,7 +3,7 @@ name = "abodephysicshop"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.10.1",
     "fastapi>=0.118.0",
@@ -12,6 +12,7 @@ dependencies = [
     "outlines>=1.2.5",
     "pydantic==2.7.1",
     "pyside6>=6.10.0",
+    "pysplashsurf==0.13",
     "torch>=2.8.0",
     "transformers>=4.56.2",
     "uvicorn>=0.37.0",

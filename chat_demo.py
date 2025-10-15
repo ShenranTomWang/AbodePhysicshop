@@ -1,7 +1,6 @@
 import argparse
 import sys, json
 from backend.assistant import AssistantResponse, LLMAssistant, Message, Role
-from backend.chat_service import build_prompt
 
 def main():
     parser = argparse.ArgumentParser(
@@ -61,7 +60,7 @@ def main():
                     content=user_input
                 ))
 
-                prompt = build_prompt(assistant, conversation_history)
+                prompt = assistant.build_prompt(conversation_history)
                 print(prompt)
                 
                 # Generate structured response
