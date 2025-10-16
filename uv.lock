@@ -34,7 +34,7 @@ requires-dist = [
     { name = "outlines", specifier = ">=1.2.5" },
     { name = "pydantic", specifier = "==2.7.1" },
     { name = "pyside6", specifier = ">=6.10.0" },
-    { name = "pysplashsurf", specifier = "==0.13" },
+    { name = "pysplashsurf", specifier = "==0.12.0" },
     { name = "torch", specifier = ">=2.8.0" },
     { name = "transformers", specifier = ">=4.56.2" },
     { name = "uvicorn", specifier = ">=0.37.0" },
@@ -1180,7 +1180,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/51/e123d997aa098c61d029f76663dedbfb9bc8dcf8c60cbd6adbe42f76d049/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:949452be657fa16687d0930933f032835951ef0892b37d2d53824d1a84dc97a8", size = 706758467, upload-time = "2025-06-06T21:54:08.597Z" },
@@ -1191,7 +1191,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1f/13/ee4e00f30e676b66ae65b4f08cb5bcbb8392c03f54f2d5413ea99a5d1c80/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4d2dd21ec0b88cf61b62e6b43564355e5222e4a3fb394cac0db101f2dd0d4f74", size = 193118695, upload-time = "2025-03-07T01:45:27.821Z" },
@@ -1218,9 +1218,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
-    { name = "nvidia-cusparse-cu12" },
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "nvidia-cusparse-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/48/9a13d2975803e8cf2777d5ed57b87a0b6ca2cc795f9a4f59796a910bfb80/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:4376c11ad263152bd50ea295c05370360776f8c3427b30991df774f9fb26c450", size = 267506905, upload-time = "2025-03-07T01:47:16.273Z" },
@@ -1231,7 +1231,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/f5/e1854cb2f2bcd4280c44736c93550cc300ff4b8c95ebe370d0aa7d2b473d/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:1ec05d76bbbd8b61b06a80e1eaf8cf4959c3d4ce8e711b65ebd0443bb0ebb13b", size = 288216466, upload-time = "2025-03-07T01:48:13.779Z" },
@@ -1704,26 +1704,21 @@ wheels = [
 
 [[package]]
 name = "pysplashsurf"
-version = "0.13.0.0"
+version = "0.12.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/a5/c365e1090d0244a5e01ddd4063237d4a79a78d3f46cba6d0c52df98eeb52/pysplashsurf-0.13.0.0.tar.gz", hash = "sha256:fa0b20272a0f136112fdb0f0f36072d2d25b853edef9631cd13dcf9b8d2db230", size = 482028, upload-time = "2025-09-02T21:47:48.007Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/40/2eb01026183d504e5f9911484ce7e7f76ce75923e76ca335a4f47a38a347/pysplashsurf-0.12.0.0.tar.gz", hash = "sha256:172ea2916b13593502a223f9e0844d6918f0034ab2cc695c0bbc710dbd5a95db", size = 461408, upload-time = "2025-06-25T16:27:12.818Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/f7/ff129213cc90683ed3e8b27f18bc60ea2b58cf0ce84a99f5387d6c0a000e/pysplashsurf-0.13.0.0-cp310-abi3-macosx_13_0_x86_64.whl", hash = "sha256:221339b38cf92c13f260fb6122d22b5cfc0700bc067ef12decc4870a995d5530", size = 2854861, upload-time = "2025-09-02T21:47:28.068Z" },
-    { url = "https://files.pythonhosted.org/packages/6e/1a/7980a2387ff8a99032db40de8e901c400882aac25927a01e4e35ad743257/pysplashsurf-0.13.0.0-cp310-abi3-macosx_14_0_arm64.whl", hash = "sha256:20dd52a61c5497e46db8e341b232704bc997ff91d3fde8ec6c98baf3c482a727", size = 2608216, upload-time = "2025-09-02T21:47:29.708Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/28/72e5ec32f29c974e319befef85ed05c64b1bd5579e71da620a7d7030314f/pysplashsurf-0.13.0.0-cp310-abi3-manylinux2010_i686.manylinux2014_i686.manylinux_2_12_i686.manylinux_2_17_i686.whl", hash = "sha256:93f2c7ad290578a34d16b3a054ec9582d8c71791f5c5e4553a7be396ee6ab174", size = 2924080, upload-time = "2025-09-02T21:47:30.995Z" },
-    { url = "https://files.pythonhosted.org/packages/17/c3/1ce4484af3713b5c44643ed81a815995b974b5e687974fd5590809a67c81/pysplashsurf-0.13.0.0-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:ff79199c7de80acb238ea8a01528f3b92935a0234c52acd265bf6def836e6fd6", size = 2663186, upload-time = "2025-09-02T21:47:32.6Z" },
-    { url = "https://files.pythonhosted.org/packages/84/50/04156074e2c220971bb909a4b4924c117d0b319afd187eb880a3742f1e7f/pysplashsurf-0.13.0.0-cp310-abi3-manylinux2014_armv7l.manylinux_2_17_armv7l.whl", hash = "sha256:e67081d5429963a89cd3ecbaafeaf1cd78b380856a5a3844f9c0caf7627213c8", size = 2728477, upload-time = "2025-09-02T21:47:33.973Z" },
-    { url = "https://files.pythonhosted.org/packages/9e/d7/93d70830daf654267104e2db86e2a8e0d7ad25d3306d5fdc8dc88e888885/pysplashsurf-0.13.0.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2e90fc8253185e0783a97422055a2b8c2f82c553c950a8eb0bd911d724f833ee", size = 2895090, upload-time = "2025-09-02T21:47:35.959Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/91/e045b74f60f5138b38e66c353fc4c2726d84a32f32d67f20e9f697f40475/pysplashsurf-0.13.0.0-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:272ef534394ad3672ba28e864ab790dc608c76bdfefcb2ebf8dc5bb145ca1c65", size = 2665531, upload-time = "2025-09-02T21:47:39.127Z" },
-    { url = "https://files.pythonhosted.org/packages/61/f5/31435491bba6a845617cabe17f9ccf0d71499c34c8599225adde4f541b90/pysplashsurf-0.13.0.0-cp310-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:0596b8f1c6ec2bfe6f1ba4761a9975fea125c9c6b219ae50df242102fd280d00", size = 2726911, upload-time = "2025-09-02T21:47:40.596Z" },
-    { url = "https://files.pythonhosted.org/packages/be/56/876a080e9238e18db8e1f20c0f869295923ba5a6d9fd355463bce527c44e/pysplashsurf-0.13.0.0-cp310-abi3-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3f28f9b9f843a151494e75741f907783a536c0ea98c7d7db2abe915e3e5c66d0", size = 2922095, upload-time = "2025-09-02T21:47:41.852Z" },
-    { url = "https://files.pythonhosted.org/packages/41/7f/54af73e83ceadbaf72ca053e6709865b52e3616e42740d190dc634812cab/pysplashsurf-0.13.0.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d09a7b82d2d9222811c2a966ffbb4b285d6b1d525751df79af2b91c3aa4d0d0f", size = 2899260, upload-time = "2025-09-02T21:47:43.041Z" },
-    { url = "https://files.pythonhosted.org/packages/72/ea/c09e330666ce53b4c85e064c2fef07034a3c96a43390a97af581ad172fea/pysplashsurf-0.13.0.0-cp310-abi3-win32.whl", hash = "sha256:e2bd7126618405be8508e0ebf0cbcb87e3931096451b48dc92765703dfc53af1", size = 2473164, upload-time = "2025-09-02T21:47:44.194Z" },
-    { url = "https://files.pythonhosted.org/packages/61/37/0db465df983d77bdabe32ec28c5b615157cccca0c3617e8c76d39ae4d6bf/pysplashsurf-0.13.0.0-cp310-abi3-win_amd64.whl", hash = "sha256:7b303c1f25604a0c69980578d4362de8a77418be08d533dc14af8c1613539bdd", size = 2718704, upload-time = "2025-09-02T21:47:45.596Z" },
-    { url = "https://files.pythonhosted.org/packages/69/68/e8d3329c2856d31a3d27a754f5c78b021c67747568aee7cc3a8f8f22dfd5/pysplashsurf-0.13.0.0-cp310-abi3-win_arm64.whl", hash = "sha256:0e050984aec35f564fba9b8169ea3bb82aa5cf042d13559b42f9f16eae59b3b1", size = 2453041, upload-time = "2025-09-02T21:47:46.743Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/6b/288c0bfc23a70dc22cccfb9a72a520c1736171b13579cab640eeda010171/pysplashsurf-0.12.0.0-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:2a9662de24a8e35d078ca2f949503bd8bd1227d9b78268e59e4e711ebd5654c9", size = 2736110, upload-time = "2025-06-25T16:27:11.546Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/3f/7cd030250eae350e208a5d2c10053945733e176678bda76fa4c317d59178/pysplashsurf-0.12.0.0-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:07fcd559abbae48bbadfc3406dfe33586501133d91324143bc78f29914fa4574", size = 2542947, upload-time = "2025-06-25T16:27:10.302Z" },
+    { url = "https://files.pythonhosted.org/packages/50/34/b4764c6a2f529649c19ef3b49eb1e403e0e80865f2a9ed411fb7ce7bd448/pysplashsurf-0.12.0.0-cp37-abi3-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:5569edc862d410a8e18f2bc8f762fda7bd0a3bfbc6cba9bf129a00d2e12c62ba", size = 2916704, upload-time = "2025-06-25T16:27:07.277Z" },
+    { url = "https://files.pythonhosted.org/packages/74/d8/cef641694d25301458f6e3c081fc061d1393c10cb03e45d41e97b2973d39/pysplashsurf-0.12.0.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e41738a0d86deadace9bfc7b04f0caf4890528d60daca917573f859035a89c37", size = 2654374, upload-time = "2025-06-25T16:27:04.113Z" },
+    { url = "https://files.pythonhosted.org/packages/47/91/7d2ed8c8a4efb8a5329ece0b47d578da4387cd925335fae5eea9480aeee5/pysplashsurf-0.12.0.0-cp37-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:98070f6945305592ffe7ac4ddfdbfcf44ddd88e9d537f1276f6147b7ba959718", size = 2748196, upload-time = "2025-06-25T16:27:05.668Z" },
+    { url = "https://files.pythonhosted.org/packages/24/b8/3d971798302aa6ec143d8291d514f56ec7aa2c22e457cf5388d4f7f53308/pysplashsurf-0.12.0.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1a8341ad7dc1997000561bf7b929ef0b63f82755f41ef014a792e69d71ae842e", size = 2901205, upload-time = "2025-06-25T16:27:08.755Z" },
+    { url = "https://files.pythonhosted.org/packages/71/d6/e5003c3f524515e56b8db14aaa5db02f02689c3e7584e4d2222d2d0aaf63/pysplashsurf-0.12.0.0-cp37-abi3-win32.whl", hash = "sha256:cda97a1d54c9178ae487ff1c69d71ddf89ded8f6bbc220834711dc8ef911bada", size = 2463415, upload-time = "2025-06-25T16:27:15.393Z" },
+    { url = "https://files.pythonhosted.org/packages/c0/77/19d3603b4d778d2ff6d8822a1d383ec78e913791d9fae88aaeabb1df6146/pysplashsurf-0.12.0.0-cp37-abi3-win_amd64.whl", hash = "sha256:51b0466beb1928029b81c583df9ea83cb85ffdc9edab15a256a5484680818606", size = 2717330, upload-time = "2025-06-25T16:27:14.117Z" },
 ]
 
 [[package]]
@@ -2352,7 +2347,7 @@ name = "triton"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "setuptools" },
+    { name = "setuptools", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d0/66/b1eb52839f563623d185f0927eb3530ee4d5ffe9d377cdaf5346b306689e/triton-3.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:31c1d84a5c0ec2c0f8e8a072d7fd150cab84a9c239eaddc6706c081bfae4eb04", size = 155560068, upload-time = "2025-07-30T19:58:37.081Z" },

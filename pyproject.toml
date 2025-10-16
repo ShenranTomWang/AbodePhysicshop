@@ -12,7 +12,7 @@ dependencies = [
     "outlines>=1.2.5",
     "pydantic==2.7.1",
     "pyside6>=6.10.0",
-    "pysplashsurf==0.13",
+    "pysplashsurf==0.12.0",
     "torch>=2.8.0",
     "transformers>=4.56.2",
     "uvicorn>=0.37.0",
