@@ -39,7 +39,7 @@ class LLMAssistant:
     def chat2prompt(self, messages: list[Message]) -> str:
         prompt = ""
         for message in messages:
-            prompt += f"<|im_start|>{message.role}\n: {message.content}<|im_end|>\n"
+            prompt += f"<|im_start|>{message.role}\n {message.content}<|im_end|>\n"
         return prompt
     
     def build_prompt(self, conversation_history: List[Message]) -> str:
