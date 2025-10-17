@@ -37,10 +37,8 @@ class LLMAssistant:
         self.streamer = None
         
     def chat2prompt(self, messages: list[Message]) -> str:
-        prompt = ""
-        for message in messages:
-            prompt += f"<|im_start|>{message.role}\n {message.content}<|im_end|>\n"
-        return prompt
+        messages = [msg.model_dump() for msg in messages]
+        return self.model.tokenizer.apply_chat_template(messages)
     
     def build_prompt(self, conversation_history: List[Message]) -> str:
         if not conversation_history or conversation_history[0].role != Role.SYSTEM:
