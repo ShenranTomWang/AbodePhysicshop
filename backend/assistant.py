@@ -30,15 +30,19 @@ class AssistantResponse(Message):
 
 class LLMAssistant:
     def __init__(self, model_name: str, device: str = "cpu"):
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = outlines.from_transformers(
             AutoModelForCausalLM.from_pretrained(model_name, device_map=device),
-            AutoTokenizer.from_pretrained(model_name)
+            tokenizer
         )
+        self.tokenizer = tokenizer
         self.streamer = None
         
     def chat2prompt(self, messages: list[Message]) -> str:
         messages = [msg.model_dump() for msg in messages]
-        return self.model.tokenizer.apply_chat_template(messages)
+        chat = self.tokenizer.apply_chat_template(messages)
+        chat = self.tokenizer.decode(chat)
+        return chat
     
     def build_prompt(self, conversation_history: List[Message]) -> str:
         if not conversation_history or conversation_history[0].role != Role.SYSTEM:

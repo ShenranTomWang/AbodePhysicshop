@@ -45,11 +45,11 @@ class SimOptions(BaseModel):
 class MPMOptions(BaseModel):
     lower_bound: Vec3 = (-1.0, -1.0, 0.0)
     upper_bound: Vec3 = (1.0, 1.0, 1.5)
-    grid_density: int = 16
+    grid_density: int = 8
 
     @model_validator(mode="after")
     def _ranges(self):
-        self.grid_density = int(_clip(int(self.grid_density), 16, 512))
+        self.grid_density = int(_clip(int(self.grid_density), 8, 512))
         # (optional) ensure bounds are ordered
         lb, ub = list(self.lower_bound), list(self.upper_bound)
         for i in range(3):

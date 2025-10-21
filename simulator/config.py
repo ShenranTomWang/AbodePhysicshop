@@ -63,6 +63,7 @@ class GenesisConfig(BaseModel):
     
     @model_validator(mode="after")
     def _check_or_fit_domain(self):
+        # TODO: bug lies in this function
         lb, ub = self.mpm_options.lower_bound, self.mpm_options.upper_bound
 
         # 1) lower < upper
