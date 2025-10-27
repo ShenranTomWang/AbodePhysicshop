@@ -5,6 +5,7 @@ from .scene import StaticObject, MPMBody
 from .geometry import BoxMorph
 from .material import ElasticMaterial
 from .visual import Surface
+import math
 
 def _min3(a, b): return (min(a[0], b[0]), min(a[1], b[1]), min(a[2], b[2]))
 def _max3(a, b): return (max(a[0], b[0]), max(a[1], b[1]), max(a[2], b[2]))
@@ -63,49 +64,70 @@ class GenesisConfig(BaseModel):
     
     @model_validator(mode="after")
     def _check_or_fit_domain(self):
-        # TODO: bug lies in this function
-        lb, ub = self.mpm_options.lower_bound, self.mpm_options.upper_bound
+        
+        lb = tuple(self.mpm_options.lower_bound)
+        ub = tuple(self.mpm_options.upper_bound)
 
         # 1) lower < upper
         if not (lb[0] < ub[0] and lb[1] < ub[1] and lb[2] < ub[2]):
-            raise ValueError(f"mpm_options.lower_bound {lb} must be strictly less than upper_bound {ub} in all axes")
+            raise ValueError(
+                f"mpm_options.lower_bound {lb} must be strictly less than upper_bound {ub}"
+            )
 
-        # 2) scene AABB from bodies (ignore infinite planes)
-        scene_aabb = None
+        # 2) Build bodies' axis-aligned bounding box (AABB) from morphs
+        bodies_aabb = None  # Optional[Tuple[Vec3, Vec3]]
         for body in self.mpm_bodies:
-            aabb = body.morph.aabb()
-            scene_aabb = _aabb_union(scene_aabb, aabb)
+            aabb = body.morph.aabb()  # Plane returns None; Box/Sphere return (lb, ub)
+            if aabb is None:
+                continue
+            bodies_aabb = _aabb_union(bodies_aabb, aabb)
 
-        # No finite bodies: nothing to check
-        if scene_aabb is None:
+        # If no finite AABB (e.g., no MPM bodies), nothing to check
+        if bodies_aabb is None:
             return self
 
-        (bl, bu) = scene_aabb
-        # 3) Are all bodies inside?
-        inside = (lb[0] <= bl[0] and lb[1] <= bl[1] and lb[2] <= bl[2] and
-                  ub[0] >= bu[0] and ub[1] >= bu[1] and ub[2] >= bu[2])
+        bl, bu = bodies_aabb  # <-- bodies' lower/upper corners
 
-        if inside:
+        # 3) Estimate Genesis "safety padding" (effective box is smaller than raw)
+        #    Heuristic: ~2 grid cells along the largest dimension is robust.
+        ext = (ub[0] - lb[0], ub[1] - lb[1], ub[2] - lb[2])
+        largest_extent = max(ext)
+        gd = max(1, int(getattr(self.mpm_options, "grid_density", 128)))
+        cell = largest_extent / float(gd)
+        safety = 2.0 * cell
+
+        eff_lb = (lb[0] + safety, lb[1] + safety, lb[2] + safety)
+        eff_ub = (ub[0] - safety, ub[1] - safety, ub[2] - safety)
+
+        # 4) Do bodies fit inside the *effective* solver box?
+        inside_effective = (
+            bl[0] >= eff_lb[0] and bl[1] >= eff_lb[1] and bl[2] >= eff_lb[2] and
+            bu[0] <= eff_ub[0] and bu[1] <= eff_ub[1] and bu[2] <= eff_ub[2]
+        )
+        if inside_effective:
             return self
 
-        # 4) Auto-fit if requested
+        # 5) If not, either auto-expand or fail with a helpful error
         if self.auto_fit_bounds:
-            # pad by a fraction of scene diagonal
-            diag = ((bu[0]-bl[0])**2 + (bu[1]-bl[1])**2 + (bu[2]-bl[2])**2) ** 0.5
-            pad = self.bounds_padding * max(1e-6, diag)
+            # Use the larger of: user pad (as fraction of scene diagonal) vs safety
+            diag = math.dist(bl, bu)
+            pad = max(float(self.bounds_padding) * diag, safety)
 
-            new_lb = (bl[0]-pad, bl[1]-pad, bl[2]-pad)
-            new_ub = (bu[0]+pad, bu[1]+pad, bu[2]+pad)
+            new_lb = (min(lb[0], bl[0] - pad), min(lb[1], bl[1] - pad), min(lb[2], bl[2] - pad))
+            new_ub = (max(ub[0], bu[0] + pad), max(ub[1], bu[1] + pad), max(ub[2], bu[2] + pad))
+
             self.mpm_options.lower_bound = new_lb
             self.mpm_options.upper_bound = new_ub
             return self
 
-        # 5) Otherwise: fail loudly with a helpful message
         if self.require_bodies_inside:
             raise ValueError(
-                "One or more bodies lie outside the simulation domain.\n"
-                f"Domain: lb={lb}, ub={ub}\n"
-                f"Bodies AABB: lb={bl}, ub={bu}\n"
-                "Set auto_fit_bounds=True to automatically expand the domain."
+                "One or more bodies lie outside the *effective* simulation domain "
+                "(Genesis shrinks the raw domain by a safety padding).\n"
+                f"Raw domain:    lb={lb}, ub={ub}\n"
+                f"Effective box: lb={eff_lb}, ub={eff_ub}  (safety≈{safety:.4f})\n"
+                f"Bodies AABB:   lb={bl},  ub={bu}\n"
+                "Enable auto_fit_bounds=True or enlarge mpm_options bounds."
             )
+
         return self
