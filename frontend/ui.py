@@ -1,11 +1,14 @@
 import threading
+import json  # [ADDED] Needed for config viewer
 from backend.assistant import AssistantResponse, Role, Message
 from simulator.config import GenesisConfig
 from PySide6 import QtCore, QtGui, QtWidgets
 from .controllers import GenesisRunner, LLMClient
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 
 class ChatList(QtWidgets.QListWidget):
     def __init__(self, bubble_hpad: int = 8, bubble_vpad: int = 8, *args, **kwargs):
@@ -62,6 +65,7 @@ class ChatList(QtWidgets.QListWidget):
         self.setItemWidget(item, row)
         self.scrollToBottom()
 
+
 class MainWindow(QtWidgets.QMainWindow):
     addBubble = QtCore.Signal(Message)
     showError = QtCore.Signal(str)
@@ -85,25 +89,28 @@ class MainWindow(QtWidgets.QMainWindow):
         splitter = QtWidgets.QSplitter()
         splitter.setOrientation(QtCore.Qt.Horizontal)
 
+        # =======================
+        # LEFT PANEL (config viewer + sim controls)
+        # =======================
         left = QtWidgets.QWidget()
         left_layout = QtWidgets.QVBoxLayout(left)
 
-        status_row = QtWidgets.QHBoxLayout()
-        self.lbl_status = QtWidgets.QLabel()
-        self.lbl_status.setAlignment(QtCore.Qt.AlignCenter)
-        self.lbl_status.setWordWrap(True)
-        self.lbl_status.setSizePolicy(
-            QtWidgets.QSizePolicy.Preferred,
-            QtWidgets.QSizePolicy.Fixed
-        )
-        font = self.lbl_status.font()
-        font.setPointSize(font.pointSize() + 1)
-        self.lbl_status.setFont(font)
+        # [ADDED] Config Viewer (user can see & edit JSON config)
+        self.json_view = QtWidgets.QPlainTextEdit()
+        self.json_view.setReadOnly(False)
+        self.json_view.setPlaceholderText("Configuration will appear here after AI generates a response…")
+        self.json_view.setMinimumHeight(300)
+        self.json_view.setStyleSheet("QPlainTextEdit { background: #fdfdfd; border: 1px solid #ccc; }")
 
-        status_row.addStretch(1)
-        status_row.addWidget(self.lbl_status)
-        status_row.addStretch(1)
-        left_layout.addLayout(status_row)
+        left_layout.addWidget(QtWidgets.QLabel("🧩 Current Simulation Config:"))
+        left_layout.addWidget(self.json_view)
+
+        # [ADDED] Apply Config button
+        self.btn_apply_cfg = QtWidgets.QPushButton("Apply Edited Config")
+        self.btn_apply_cfg.clicked.connect(self._on_apply_config)
+        left_layout.addWidget(self.btn_apply_cfg)
+
+        # Simulation control buttons (unchanged)
         sim_controls = QtWidgets.QHBoxLayout()
         self.btn_start = QtWidgets.QPushButton("Start Sim")
         self.btn_end = QtWidgets.QPushButton("End Sim")
@@ -118,6 +125,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_stop.clicked.connect(self._on_stop)
         left_layout.addLayout(sim_controls)
 
+        # =======================
+        # RIGHT PANEL (chat + LLM)
+        # =======================
         right = QtWidgets.QWidget()
         right_layout = QtWidgets.QVBoxLayout(right)
 
@@ -155,6 +165,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setCentralWidget(splitter)
 
+        # Signals & status connections
         self.btn_apply.clicked.connect(self._on_apply)
         self.btn_send.clicked.connect(self._on_send)
         self.ed_input.returnPressed.connect(self._on_send)
@@ -169,12 +180,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._status_timer.setSingleShot(True)
         self._status_timer.timeout.connect(lambda: self._set_status("Idle"))
 
+    # =======================
+    # STATUS / SIM CONTROL
+    # =======================
     def flash_status(self, text: str, ttl_ms: int = 3000):
         self.statusMessage.emit(text, ttl_ms)
-    
-    @QtCore.Slot(str, int)
-    def _ui_status(self, text: str, ttl_ms: int):
-        self._set_status(text, ttl_ms if ttl_ms > 0 else None)
 
     def _set_status(self, s: str, ttl_ms: int = None):
         self.lbl_status.setText(s)
@@ -196,6 +206,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.runner.stop()
         self.flash_status("Stopped", 2000)
 
+    # =======================
+    # PARAMS & CONFIG APPLY
+    # =======================
     def _on_apply(self):
         self.flash_status("Applying parameters…", 2000)
         try:
@@ -216,6 +229,19 @@ class MainWindow(QtWidgets.QMainWindow):
         except Exception as e:
             self.showError.emit(f"Failed to update config: {e}")
 
+    def _on_apply_config(self):  # [ADDED] Handler for "Apply Edited Config"
+        try:
+            raw = self.json_view.toPlainText()
+            cfg_dict = json.loads(raw)
+            cfg = GenesisConfig(**cfg_dict)
+            self.updateConfig.emit(cfg)
+            self.flash_status("Custom config applied.", 2000)
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Invalid Config", f"Error parsing config:\n{e}")
+
+    # =======================
+    # LLM CHAT HANDLER
+    # =======================
     def _on_send(self):
         self.flash_status("Sending message…", 2000)
         text = self.ed_input.text().strip()
@@ -228,6 +254,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.addBubble.emit(resp)
             cfg = resp.content.config
             self.updateConfig.emit(cfg)
+            # [ADDED] Auto-update config viewer when LLM sends new config
+            try:
+                self.json_view.setPlainText(json.dumps(cfg.model_dump(), indent=2))
+            except Exception:
+                self.json_view.setPlainText(str(cfg))
             self.flash_status("Message processed.", 2000)
 
         def worker():
