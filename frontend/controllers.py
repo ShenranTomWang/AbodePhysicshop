@@ -66,7 +66,6 @@ class GenesisRunner(QtCore.QObject):
                 self._bodies.append(_body)
             for body in cfg.static:
                 _static = self._scene.add_entity(
-                    material=body.material.to_genesis(),
                     morph=body.morph.to_genesis(),
                     surface=body.surface.to_genesis()
                 )
