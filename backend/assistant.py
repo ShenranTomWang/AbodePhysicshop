@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from enum import Enum
 from simulator.config import GenesisConfig
 from typing import List
-import logging
+import logging, json
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -43,19 +43,24 @@ class LLMAssistant:
         chat = self.tokenizer.apply_chat_template(messages)
         chat = self.tokenizer.decode(chat)
         return chat
-    
+
+    def get_system_prompt(self) -> Message:
+        return Message(
+            role=Role.SYSTEM,
+            content=f"""
+                You are a helpful AI assistant that provides config for Genesis physics simulation structured in JSON format.
+                You will provide a textual response or anything you want to ask the user in the "content" field, and a detailed "chain_of_thought" field for your reasoning.
+                Finally, you will provide a "config" field containing the GenesisConfig JSON schema.
+                Make assumptions about what the user wants, what objects should be static or dynamic, etc. You do not always need to make changes to the config; if the user is just chatting, you can keep the config the same.
+                Your response schema will look like this:
+                {json.dumps(AssistantResponse.model_json_schema(), indent=4)}
+            """
+        )
+
     def build_prompt(self, conversation_history: List[Message]) -> str:
         if not conversation_history or conversation_history[0].role != Role.SYSTEM:
             conversation_history = [
-                Message(
-                    role=Role.SYSTEM,
-                    content="""
-                        You are a helpful AI assistant that provides config for Genesis physics simulation structured in JSON format. \
-                        You will provide a textual response or anything you want to ask the user in the "content" field, and a detailed "chain_of_thought" field for your reasoning. \
-                        Finally, you will provide a "config" field containing the GenesisConfig JSON schema. \
-                        Make assumptions about what the user wants, what objects should be static or dynamic, etc. You do not always need to make changes to the config; if the user is just chatting, you can keep the config the same. \
-                    """# TODO: Add example response
-                ),
+                self.get_system_prompt(),
                 *conversation_history,
             ]
         return self.chat2prompt(conversation_history)
