@@ -43,7 +43,7 @@ def main():
         print("Responses will be structured as JSON")
         print("="*50)
 
-        conversation_history = []
+        conversation_history = [assistant.get_system_prompt()]
         while True:
             try:
                 user_input = input("\nYou: ").strip()
