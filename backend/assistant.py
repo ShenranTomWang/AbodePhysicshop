@@ -9,8 +9,6 @@ import logging, json
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-outlines.models.from_transformers
-
 class Role(str, Enum):
     SYSTEM = "system"
     USER = "user"
