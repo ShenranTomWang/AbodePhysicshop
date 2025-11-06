@@ -1,5 +1,6 @@
 from PySide6 import QtCore
-import threading, requests
+from PySide6.QtCore import Slot
+import requests
 import genesis as gs
 from typing import List
 from backend.assistant import Message, AssistantResponse, Role
@@ -35,8 +36,9 @@ class GenesisRunner(QtCore.QObject):
         self.cfg = None
         self._bodies = []
         self._statics = []
-        self._step_thread = threading.Thread(target=self.step, daemon=True)
         self._running = False
+        self._timer = QtCore.QTimer(self)
+        self._timer.timeout.connect(self._tick)   # runs in GUI thread
     
     def to(self, device: str):
         if device == self.device:
@@ -47,6 +49,11 @@ class GenesisRunner(QtCore.QObject):
             self.update_config(self.cfg)
 
     def update_config(self, cfg: GenesisConfig):
+        if self._scene is not None:
+            self._scene.close()
+            self._scene = None
+            self._bodies = []
+            self._statics = []
         try:
             self.cfg = cfg
             self._scene = gs.Scene(
@@ -78,40 +85,39 @@ class GenesisRunner(QtCore.QObject):
     def is_running(self) -> bool:
         return self._running
 
-    def start(self):
+    def start(self, fps=60):
         if self._running:
             return
         self._running = True
         self.started.emit()
-        if not self._step_thread.is_alive():
-            self._step_thread = threading.Thread(target=self.step, daemon=True)
-            self._step_thread.start()
+        interval_ms = 0 if fps is None else max(0, int(1000 / fps))
+        self._timer.start(interval_ms)
             
     def stop(self):
         if not self._running:
             return
         self._running = False
-        if self._step_thread.is_alive():
-            self._step_thread.join(timeout=5)
-        self._scene.reset() if self._scene else None
+        self._timer.stop()
         self.stopped.emit(0)
 
     def end(self):
         if not self._running:
             return
         self._running = False
-        if self._step_thread.is_alive():
-            self._step_thread.join(timeout=5)
+        self._timer.stop()
         self._scene.reset() if self._scene else None
         self.ended.emit(0)
     
-    def step(self):
+    @Slot()
+    def _tick(self):
         try:
-            if self._running:
-                self._scene.step()
+            if not self._running:
+                return
+            self._scene.step()
         except Exception as e:
-            self.errored.emit(str(e))
             self._running = False
+            self._timer.stop()
+            self.errored.emit(str(e))
             self.ended.emit(-1)
 
 class LLMClient:

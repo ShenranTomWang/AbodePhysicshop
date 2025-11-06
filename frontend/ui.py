@@ -115,7 +115,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_start = QtWidgets.QPushButton("Start Sim")
         self.btn_end = QtWidgets.QPushButton("End Sim")
         self.btn_stop = QtWidgets.QPushButton("Stop Sim")
-        self.btn_stop.setEnabled(False)
         sim_controls.addWidget(self.btn_start)
         sim_controls.addWidget(self.btn_end)
         sim_controls.addWidget(self.btn_stop)
@@ -188,8 +187,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _set_status(self, s: str, ttl_ms: int = None):
         self.lbl_status.setText(s)
-        self.btn_start.setEnabled(not self.runner.is_running())
-        self.btn_stop.setEnabled(self.runner.is_running())
         self._status_timer.stop()
         if ttl_ms is not None:
             self._status_timer.start(ttl_ms)
