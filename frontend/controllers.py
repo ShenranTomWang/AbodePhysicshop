@@ -138,20 +138,25 @@ class LLMClient:
         }
         resp = requests.put(self.backend_url + "/set_model", json=payload, timeout=10)
         resp.raise_for_status()
-        resp = resp.json()
-        if resp["status_code"] != 200:
-            raise ValueError(f"Failed to set model parameters: {resp['text']}")
+        body = resp.json()
+        if body.get("status") != 200:
+            raise ValueError(f"Failed to set model parameters: {body}")
 
     def send(self, user_text: str) -> AssistantResponse:
-        self.history.append(Message(role=Role.USER, content=user_text))
+        user_msg = Message(role=Role.USER, content=user_text)
+        self.history.append(user_msg)
         payload = {
             "model": self.model,
             "device": self.device,
             "max_tokens": self.max_tokens,
-            "conversation_history": [m.__dict__ for m in self.history],
+            "conversation_history": [m.model_dump(mode="json") for m in self.history],
         }
-        resp = requests.post(self.backend_url + "/generate", json=payload, timeout=300)
-        resp.raise_for_status()
+        try:
+            resp = requests.post(self.backend_url + "/generate", json=payload, timeout=300)
+            resp.raise_for_status()
+        except Exception:
+            self.history.pop()  # keep history consistent if the call failed
+            raise
         resp = resp.json()
         ar = AssistantResponse.model_validate_json(resp)
         self.history.append(ar)

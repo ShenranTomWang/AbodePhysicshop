@@ -98,23 +98,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # [ADDED] Config Viewer (user can see & edit JSON config)
         self.json_view = QtWidgets.QPlainTextEdit()
         self.json_view.setReadOnly(False)
-        self.json_view.setPlaceholderText("Configuration will appear here after AI generates a response…")
+        self.json_view.setPlaceholderText("Configuration will appear here after AI generates a response??)
         self.json_view.setMinimumHeight(300)
         self.json_view.setStyleSheet("QPlainTextEdit { background: #fdfdfd; border: 1px solid #ccc; }")
 
-        self.lbl_status = QtWidgets.QLabel("Idle")
-        self.lbl_status.setStyleSheet("color: #666; font-size: 11px;")
-        left_layout.addWidget(self.lbl_status)
-
-        self._json_programmatic = False
-        self._json_dirty = False
-        self._json_auto_delay_ms = 1000
-        self._json_apply_timer = QtCore.QTimer(self)
-        self._json_apply_timer.setSingleShot(True)
-        self._json_apply_timer.timeout.connect(self._auto_apply_json_view)
-        self.json_view.textChanged.connect(self._on_json_view_changed)
-
-        left_layout.addWidget(QtWidgets.QLabel("🧩 Current Simulation Config:"))
+        left_layout.addWidget(QtWidgets.QLabel("?�� Current Simulation Config:"))
         left_layout.addWidget(self.json_view)
 
         # [ADDED] Apply Config button
@@ -160,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.chat_list = ChatList()
         input_row = QtWidgets.QHBoxLayout()
         self.ed_input = QtWidgets.QLineEdit()
-        self.ed_input.setPlaceholderText("Type a message for the LLM…")
+        self.ed_input.setPlaceholderText("Type a message for the LLM??)
         self.btn_send = QtWidgets.QPushButton("Send")
         input_row.addWidget(self.ed_input)
         input_row.addWidget(self.btn_send)
@@ -187,11 +175,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.runner.stopped.connect(lambda rc: self.flash_status(f"Stopped (rc={rc})", 2000))
         self.runner.errored.connect(lambda msg: self.flash_status(f"Error: {msg}", 4000))
 
-        self.statusMessage.connect(self._set_status)
         self._status_timer = QtCore.QTimer(self)
         self._status_timer.setSingleShot(True)
         self._status_timer.timeout.connect(lambda: self._set_status("Idle"))
-        self._set_status("Idle")
 
     # =======================
     # STATUS / SIM CONTROL
@@ -201,8 +187,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _set_status(self, s: str, ttl_ms: int = None):
         self.lbl_status.setText(s)
-        self.btn_start.setEnabled(not self.runner.is_running())
-        self.btn_stop.setEnabled(self.runner.is_running())
         self._status_timer.stop()
         if ttl_ms is not None:
             self._status_timer.start(ttl_ms)
@@ -223,7 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # PARAMS & CONFIG APPLY
     # =======================
     def _on_apply(self):
-        self.flash_status("Applying parameters…", 2000)
+        self.flash_status("Applying parameters??, 2000)
         try:
             self.llm.set_params(
                 model=self.ed_model.text().strip() or "Qwen/Qwen2.5-1.5B-Instruct",
@@ -235,7 +219,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showError.emit(f"Failed to apply parameters: {e}")
     
     def _on_update(self, cfg: GenesisConfig):
-        self.flash_status("Updating config…", 2000)
+        self.flash_status("Updating config??, 2000)
         try:
             self.runner.update_config(cfg)
             self.flash_status("Config updated.", 2000)
@@ -243,15 +227,20 @@ class MainWindow(QtWidgets.QMainWindow):
             self.showError.emit(f"Failed to update config: {e}")
 
     def _on_apply_config(self):  # [ADDED] Handler for "Apply Edited Config"
-        applied = self._apply_config_from_editor(show_dialog=True, status_text="Custom config applied.")
-        if applied:
-            self._json_dirty = False
+        try:
+            raw = self.json_view.toPlainText()
+            cfg_dict = json.loads(raw)
+            cfg = GenesisConfig(**cfg_dict)
+            self.updateConfig.emit(cfg)
+            self.flash_status("Custom config applied.", 2000)
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(self, "Invalid Config", f"Error parsing config:\n{e}")
 
     # =======================
     # LLM CHAT HANDLER
     # =======================
     def _on_send(self):
-        self.flash_status("Sending message…", 2000)
+        self.flash_status("Sending message??, 2000)
         text = self.ed_input.text().strip()
         if not text:
             return
@@ -263,67 +252,16 @@ class MainWindow(QtWidgets.QMainWindow):
             cfg = resp.content.config
             self.updateConfig.emit(cfg)
             # [ADDED] Auto-update config viewer when LLM sends new config
-            self._set_json_editor_text(cfg)
+            try:
+                self.json_view.setPlainText(json.dumps(cfg.model_dump(), indent=2))
+            except Exception:
+                self.json_view.setPlainText(str(cfg))
             self.flash_status("Message processed.", 2000)
 
         def worker():
             try:
                 resp = self.llm.send(text)
-                QtCore.QMetaObject.invokeMethod(
-                    self,
-                    lambda r=resp: success_update(r),
-                    QtCore.Qt.QueuedConnection,
-                )
+                success_update(resp)
             except Exception as e:
-                QtCore.QMetaObject.invokeMethod(
-                    self,
-                    lambda msg=f"LLM request failed: {e}": self.showError.emit(msg),
-                    QtCore.Qt.QueuedConnection,
-                )
+                self.showError.emit(f"LLM request failed: {e}")
         threading.Thread(target=worker, daemon=True).start()
-
-    # =======================
-    # CONFIG EDITOR HELPERS
-    # =======================
-    def _on_json_view_changed(self):
-        if self._json_programmatic:
-            return
-        self._json_dirty = True
-        self._json_apply_timer.start(self._json_auto_delay_ms)
-
-    def _auto_apply_json_view(self):
-        if not self._json_dirty:
-            return
-        applied = self._apply_config_from_editor(show_dialog=False, status_text="Config synced from editor.")
-        if applied:
-            self._json_dirty = False
-
-    def _apply_config_from_editor(self, *, show_dialog: bool, status_text: str) -> bool:
-        raw = self.json_view.toPlainText().strip()
-        if not raw:
-            return False
-        try:
-            cfg_dict = json.loads(raw)
-            cfg = GenesisConfig(**cfg_dict)
-        except Exception as e:
-            if show_dialog:
-                QtWidgets.QMessageBox.warning(self, "Invalid Config", f"Error parsing config:\n{e}")
-            else:
-                logger.debug("Auto-apply skipped: invalid config text: %s", e)
-            return False
-        self.updateConfig.emit(cfg)
-        if status_text:
-            self.flash_status(status_text, 2000)
-        return True
-
-    def _set_json_editor_text(self, cfg: GenesisConfig):
-        try:
-            serialized = json.dumps(cfg.model_dump(), indent=2)
-        except Exception:
-            serialized = str(cfg)
-        self._json_programmatic = True
-        try:
-            self.json_view.setPlainText(serialized)
-        finally:
-            self._json_programmatic = False
-        self._json_dirty = False
