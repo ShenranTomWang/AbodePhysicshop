@@ -50,7 +50,8 @@ class GenesisRunner(QtCore.QObject):
 
     def update_config(self, cfg: GenesisConfig):
         if self._scene is not None:
-            self._scene.close()
+            self._scene.reset()
+            del self._scene
             self._scene = None
             self._bodies = []
             self._statics = []

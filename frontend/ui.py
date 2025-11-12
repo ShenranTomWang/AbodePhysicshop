@@ -67,9 +67,10 @@ class ChatList(QtWidgets.QListWidget):
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    addBubble = QtCore.Signal(Message)
+    addBubble = QtCore.Signal(object)
     showError = QtCore.Signal(str)
-    updateConfig = QtCore.Signal(GenesisConfig)
+    updateConfig = QtCore.Signal(object)
+    setJsonText = QtCore.Signal(str)
     statusMessage = QtCore.Signal(str, int)
     
     def __init__(self, args):
@@ -182,7 +183,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ed_input.returnPressed.connect(self._on_send)
         self.addBubble.connect(self.chat_list.add_bubble)
         self.showError.connect(lambda msg: self.flash_status(f"Error: {msg}", 4000))
-        self.updateConfig.connect(self._on_update)
+        self.updateConfig.connect(self._on_update, QtCore.Qt.QueuedConnection)
+        self.setJsonText.connect(self.json_view.setPlainText, QtCore.Qt.QueuedConnection)
         self.runner.started.connect(lambda: self.flash_status("Running", 2000))
         self.runner.stopped.connect(lambda rc: self.flash_status(f"Stopped (rc={rc})", 2000))
         self.runner.errored.connect(lambda msg: self.flash_status(f"Error: {msg}", 4000))
@@ -262,18 +264,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.addBubble.emit(resp)
             cfg = resp.content.config
             self.updateConfig.emit(cfg)
-            # [ADDED] Auto-update config viewer when LLM sends new config
-            self._set_json_editor_text(cfg)
+            try:
+                serialized = json.dumps(cfg.model_dump(), indent=2)
+            except Exception:
+                serialized = str(cfg)
+            self.setJsonText.emit(serialized)
             self.flash_status("Message processed.", 2000)
 
         def worker():
             try:
                 resp = self.llm.send(text)
-                QtCore.QMetaObject.invokeMethod(
-                    self,
-                    lambda r=resp: success_update(r),
-                    QtCore.Qt.QueuedConnection,
-                )
+                success_update(resp)
             except Exception as e:
                 QtCore.QMetaObject.invokeMethod(
                     self,
@@ -304,12 +305,11 @@ class MainWindow(QtWidgets.QMainWindow):
             return False
         try:
             cfg_dict = json.loads(raw)
-            cfg = GenesisConfig(**cfg_dict)
+            cfg = GenesisConfig.model_validate(cfg_dict)
         except Exception as e:
+            self.flash_status("Config parse failed (see log)", 3000)
             if show_dialog:
                 QtWidgets.QMessageBox.warning(self, "Invalid Config", f"Error parsing config:\n{e}")
-            else:
-                logger.debug("Auto-apply skipped: invalid config text: %s", e)
             return False
         self.updateConfig.emit(cfg)
         if status_text:
