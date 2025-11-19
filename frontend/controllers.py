@@ -78,7 +78,6 @@ class GenesisRunner(QtCore.QObject):
                     surface=body.surface.to_genesis()
                 )
                 self._statics.append(_static)
-            self._scene.build()
         except Exception as e:
             traceback.print_exc()
             self.errored.emit(f"Failed to update config: {e}")
@@ -90,6 +89,8 @@ class GenesisRunner(QtCore.QObject):
         if self._running:
             return
         self._running = True
+        if not self._scene.is_built:
+            self._scene.build()
         self.started.emit()
         interval_ms = 0 if fps is None else max(0, int(1000 / fps))
         self._timer.start(interval_ms)
