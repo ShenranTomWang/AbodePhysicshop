@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.118.0",
     "genesis-world>=0.2.1",
     "huggingface>=0.0.1",
+    "openai>=2.8.1",
     "outlines>=1.2.5",
     "pydantic==2.7.1",
     "pyside6>=6.10.0",
