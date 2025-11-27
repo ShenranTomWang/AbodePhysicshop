@@ -5,6 +5,7 @@ import genesis as gs
 from typing import List
 from backend.assistant import Message, AssistantResponse, Role
 from simulator.config import GenesisConfig
+import subprocess
 
 def get_system_prompt() -> Message:
     return Message(
@@ -48,8 +49,7 @@ class GenesisRunner(QtCore.QObject):
         self._bodies = []
         self._statics = []
         self._running = False
-        self._timer = QtCore.QTimer(self)
-        self._timer.timeout.connect(self._tick)   # runs in GUI thread
+        self.process = None
     
     def to(self, device: str):
         if device == self.device:
@@ -60,77 +60,28 @@ class GenesisRunner(QtCore.QObject):
             self.update_config(self.cfg)
 
     def update_config(self, cfg: GenesisConfig):
-        if self._scene is not None:
-            self._scene.reset()
-            del self._scene
-            self._scene = None
-            self._bodies = []
-            self._statics = []
-        try:
-            self.cfg = cfg
-            self._scene = gs.Scene(
-                sim_options=cfg.sim_options.to_genesis(),
-                mpm_options=cfg.mpm_options.to_genesis(),
-                vis_options=cfg.vis_options.to_genesis(),
-                viewer_options=cfg.viewer_options.to_genesis(),
-                show_viewer=cfg.show_viewer
-            )
-            self._bodies = []
-            for body in cfg.mpm_bodies:
-                _body = self._scene.add_entity(
-                    material=body.material.to_genesis(),
-                    morph=body.morph.to_genesis(),
-                    surface=body.surface.to_genesis()
-                )
-                self._bodies.append(_body)
-            for body in cfg.static:
-                _static = self._scene.add_entity(
-                    morph=body.morph.to_genesis(),
-                    surface=body.surface.to_genesis()
-                )
-                self._statics.append(_static)
-        except Exception as e:
-            self.errored.emit(f"Failed to update config: {e}")
-    
-    def is_running(self) -> bool:
-        return self._running
-
-    def start(self, fps=60):
-        if self._running:
-            return
-        self._running = True
-        if not self._scene.is_built:
-            self._scene.build()
-        self.started.emit()
-        interval_ms = 0 if fps is None else max(0, int(1000 / fps))
-        self._timer.start(interval_ms)
+        self.cfg = cfg
             
-    def stop(self):
-        if not self._running:
-            return
-        self._running = False
-        self._timer.stop()
-        self.stopped.emit(0)
+    def is_running(self) -> bool:
+        return self.process is not None
 
-    def end(self):
-        if not self._running:
+    def start(self):
+        if self.cfg is None:
             return
-        self._running = False
-        self._timer.stop()
-        self._scene.reset() if self._scene else None
-        self.ended.emit(0)
-    
-    @Slot()
-    def _tick(self):
-        try:
-            if not self._running:
-                return
-            self._scene.step()
-        except Exception as e:
-            self._running = False
-            self._timer.stop()
-            self.errored.emit(str(e))
-            self.ended.emit(-1)
+        os.makedirs("./.tmp", exist_ok=True)
+        with open("./.tmp/cfg.json", "w") as f:
+            f.write(self.cfg.model_dump_json(indent=4))
+        self.process = subprocess.Popen(
+            ["python", "genesis_simulator_from_json.py", "-c", ".tmp/cfg.json"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+            
+    def end(self):
+        if not self.process:
+            return
+        self.process.terminate()
+        self.process = None
 
 class LLMClient:
     def __init__(self, backend_url: str, model: str = "qwen-plus", device: str = "auto", max_tokens: int = 51200, use_API: bool = False):
@@ -194,7 +145,7 @@ class LLMClient:
             conversation_history = [get_system_prompt(), *self.history]
         payload = {
             "model": self.model,
-            "messages": [m.model_dump(mode="json") for m in conversation_history],
+            "messages": [{'role': m.role, 'content': json.dumps(m.model_dump(mode="json"))} for m in conversation_history],
             "response_format": {
                 "type": "json_object"
             }
