@@ -12,7 +12,7 @@ dependencies = [
     "openai>=2.8.1",
     "outlines>=1.2.5",
     "pydantic==2.7.1",
-    "pyside6>=6.10.0",
+    "pyside6>=6.10.1",
     "pysplashsurf==0.12.0",
     "torch>=2.8.0",
     "transformers>=4.56.2",

@@ -123,12 +123,17 @@ class GenesisRunner(QtCore.QObject):
             self.ended.emit(-1)
 
 class LLMClient:
-    def __init__(self, backend_url: str, model: str = "Qwen/Qwen2.5-1.5B-Instruct", device: str = "auto", max_tokens: int = 51200):
+    def __init__(self, backend_url: str, model: str = "qwen-plus", device: str = "auto", max_tokens: int = 51200, use_API: bool = False):
         self.backend_url = backend_url.rstrip("/")
         self.model = model
         self.device = device
         self.max_tokens = max_tokens
         self.history: List[Message] = []
+        self.client = openai.OpenAI(
+            api_key=os.getenv("DASHSCOPE_API_KEY"),
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        )
+        self.use_API = use_API
 
     def set_params(self, model: str, device: str, max_tokens: int):
         self.model = model
@@ -145,6 +150,12 @@ class LLMClient:
             raise ValueError(f"Failed to set model parameters: {body}")
 
     def send(self, user_text: str) -> AssistantResponse:
+        if self.use_API:
+            return self._send_API(user_text)
+        else:
+            return self._send_backend(user_text)
+    
+    def _send_backend(self, user_text: str) -> AssistantResponse:
         user_msg = Message(role=Role.USER, content=user_text)
         self.history.append(user_msg)
         payload = {
@@ -160,6 +171,30 @@ class LLMClient:
             self.history.pop()  # keep history consistent if the call failed
             raise
         resp = resp.json()
+        ar = AssistantResponse.model_validate_json(resp)
+        self.history.append(ar)
+        return ar
+    
+    def _send_API(self, user_text: str) -> AssistantResponse:
+        user_msg = Message(role=Role.USER, content=user_text)
+        self.history.append(user_msg)
+        conversation_history = self.history.copy()
+        if conversation_history[0].role != Role.SYSTEM:
+            conversation_history = [get_system_prompt(), *self.history]
+        payload = {
+            "model": self.model,
+            "conversation_history": [m.model_dump(mode="json") for m in conversation_history],
+            "response_format": AssistantResponse.model_json_schema()
+        }
+        try:
+            resp = self.client.chat.completions.create(
+                **payload
+            )
+            resp = resp.choices[0].message.content
+        except Exception:
+            self.history.pop()  # keep history consistent if the call failed
+            raise
+        resp = json.loads(resp)
         ar = AssistantResponse.model_validate_json(resp)
         self.history.append(ar)
         return ar
