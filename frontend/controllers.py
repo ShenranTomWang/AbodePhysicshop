@@ -1,20 +1,31 @@
 from PySide6 import QtCore
 from PySide6.QtCore import Slot
-import requests
+import requests, json, openai, os
 import genesis as gs
 from typing import List
 from backend.assistant import Message, AssistantResponse, Role
 from simulator.config import GenesisConfig
-import traceback
+
+def get_system_prompt() -> Message:
+    return Message(
+        role=Role.SYSTEM,
+        content=f"""
+            You are a helpful AI assistant that provides config for Genesis physics simulation structured in JSON format.
+            The user may ask you to generate or modify the simulation config.
+            You will provide a textual response or anything you want to ask the user in the "content" field, and a detailed "chain_of_thought" field for your reasoning.
+            Finally, you will provide a "config" field containing the GenesisConfig JSON schema.
+            Make assumptions about what the user wants, what objects should be static or dynamic, etc. You do not always need to make changes to the config; if the user is just chatting, you can keep the config the same.
+            Your response schema will look like this:
+            {json.dumps(AssistantResponse.model_json_schema(), indent=4)}
+            Notice that there must be at least one MPM body in the config.
+        """
+    )
 
 class GenesisRunner(QtCore.QObject):
     """Run Genesis.
 
     Public API:
-        - is_running() -> bool
         - start()
-        - stop()
-        - end()
         - update_config(cfg: dict)
 
     Signals:
@@ -79,7 +90,6 @@ class GenesisRunner(QtCore.QObject):
                 )
                 self._statics.append(_static)
         except Exception as e:
-            traceback.print_exc()
             self.errored.emit(f"Failed to update config: {e}")
     
     def is_running(self) -> bool:
@@ -139,15 +149,16 @@ class LLMClient:
         self.model = model
         self.device = device
         self.max_tokens = max_tokens
-        payload = {
-            "model": self.model,
-            "device": self.device
-        }
-        resp = requests.put(self.backend_url + "/set_model", json=payload, timeout=10)
-        resp.raise_for_status()
-        body = resp.json()
-        if body.get("status") != 200:
-            raise ValueError(f"Failed to set model parameters: {body}")
+        if not self.use_API:
+            payload = {
+                "model": self.model,
+                "device": self.device
+            }
+            resp = requests.put(self.backend_url + "/set_model", json=payload, timeout=10)
+            resp.raise_for_status()
+            body = resp.json()
+            if body.get("status") != 200:
+                raise ValueError(f"Failed to set model parameters: {body}")
 
     def send(self, user_text: str) -> AssistantResponse:
         if self.use_API:
@@ -183,8 +194,10 @@ class LLMClient:
             conversation_history = [get_system_prompt(), *self.history]
         payload = {
             "model": self.model,
-            "conversation_history": [m.model_dump(mode="json") for m in conversation_history],
-            "response_format": AssistantResponse.model_json_schema()
+            "messages": [m.model_dump(mode="json") for m in conversation_history],
+            "response_format": {
+                "type": "json_object"
+            }
         }
         try:
             resp = self.client.chat.completions.create(
@@ -195,6 +208,6 @@ class LLMClient:
             self.history.pop()  # keep history consistent if the call failed
             raise
         resp = json.loads(resp)
-        ar = AssistantResponse.model_validate_json(resp)
+        ar = AssistantResponse.model_validate(resp)
         self.history.append(ar)
         return ar

@@ -5,10 +5,11 @@ from .ui import MainWindow
 def parse_args():
     ap = argparse.ArgumentParser(description="Genesis + LLM Chat GUI")
     ap.add_argument("--backend", default="http://localhost:8000", help="FastAPI base URL without trailing slash")
-    ap.add_argument("--model", default="Qwen/Qwen2.5-1.5B-Instruct", help="LLM model name")
+    ap.add_argument("--model", default="qwen-plus", help="LLM model name")
     ap.add_argument("--llm_device", default="auto", help="Device hint for LLM")
     ap.add_argument("--genesis_device", default="cpu", choices=["cpu", "gpu"], help="Device for Genesis simulation")
     ap.add_argument("--max_tokens", type=int, default=51200, help="Max tokens")
+    ap.add_argument("--use_api", action="store_true", help="Use LLM API instead of local model")
     return ap.parse_args()
 
 def main():

@@ -85,7 +85,9 @@ class MainWindow(QtWidgets.QMainWindow):
             model=args.model,
             device=args.llm_device,
             max_tokens=args.max_tokens,
+            use_API=args.use_api,
         )
+        self.use_api = args.use_api
 
         splitter = QtWidgets.QSplitter()
         splitter.setOrientation(QtCore.Qt.Horizontal)
@@ -145,15 +147,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         top_controls = QtWidgets.QHBoxLayout()
         self.ed_model = QtWidgets.QLineEdit(args.model)
-        self.ed_device = QtWidgets.QLineEdit(args.llm_device)
+        if not self.use_api:
+            self.ed_device = QtWidgets.QLineEdit(args.llm_device)
         self.spn_tokens = QtWidgets.QSpinBox()
         self.spn_tokens.setRange(1, 51200)
         self.spn_tokens.setValue(args.max_tokens)
         self.btn_apply = QtWidgets.QPushButton("Apply Params")
         top_controls.addWidget(QtWidgets.QLabel("Model:"))
         top_controls.addWidget(self.ed_model)
-        top_controls.addWidget(QtWidgets.QLabel("Device:"))
-        top_controls.addWidget(self.ed_device)
+        if not self.use_api:
+            top_controls.addWidget(QtWidgets.QLabel("Device:"))
+            top_controls.addWidget(self.ed_device)
         top_controls.addWidget(QtWidgets.QLabel("Max Tokens:"))
         top_controls.addWidget(self.spn_tokens)
         top_controls.addWidget(self.btn_apply)
@@ -228,7 +232,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.flash_status("Applying parameters…", 2000)
         try:
             self.llm.set_params(
-                model=self.ed_model.text().strip() or "Qwen/Qwen2.5-1.5B-Instruct",
+                model=self.ed_model.text().strip() or ("qwen-plus" if self.use_api else "Qwen/Qwen2.5-1.5B-Instruct"),
                 device=self.ed_device.text().strip() or "auto",
                 max_tokens=int(self.spn_tokens.value()),
             )

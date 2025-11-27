@@ -6,7 +6,7 @@ def run_backend():
     process.wait()
 
 def run_frontend():
-    process = Popen(["python", "-m", "frontend.app"])
+    process = Popen(["python", "-m", "frontend.app", "--use_api"])
     process.wait()
 
 def main():
